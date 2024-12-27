@@ -70,3 +70,7 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 
 	respondWithJSON(w, http.StatusOK, "New user created")
 }
+
+func (app *application) getUserByClerkId(w http.ResponseWriter, r *http.Request, user database.User) {
+	respondWithJSON(w, http.StatusOK, databaseUsertoUser(user))
+}

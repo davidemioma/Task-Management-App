@@ -53,6 +53,8 @@ func (app *application) mount() http.Handler {
 		r.Get("/err", handlerErr)
 
 		r.Post("/onboard", app.createUserHandler)
+
+		r.Get("/auth/user", app.middlewareAuth(app.getUserByClerkId))
 	})
 
 	return r
