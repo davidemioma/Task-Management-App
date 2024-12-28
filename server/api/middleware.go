@@ -26,7 +26,7 @@ func (app *application) middlewareAuth(handler AuthHandler) http.HandlerFunc {
 	    if dbErr != nil {
 		    fmt.Printf("Couldn't get user: %v", err)
 
-		    respondWithError(w, http.StatusInternalServerError, "Couldn't get user")
+		    respondWithError(w, http.StatusUnauthorized, "Couldn't get user")
 
 		    return
 	    }

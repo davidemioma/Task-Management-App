@@ -55,6 +55,8 @@ func (app *application) mount() http.Handler {
 		r.Post("/onboard", app.createUserHandler)
 
 		r.Get("/auth/user", app.middlewareAuth(app.getUserByClerkId))
+
+		r.Post("/workspaces", app.middlewareAuth(app.createWorkspaceHandler))
 	})
 
 	return r

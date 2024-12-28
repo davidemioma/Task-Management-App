@@ -20,3 +20,12 @@ type User struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
+
+type Workspace struct {
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	Name      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	ImageUrl  sql.NullString
+}

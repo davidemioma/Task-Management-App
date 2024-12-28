@@ -25,7 +25,9 @@ export default async function Home() {
 
   return (
     <Suspense fallback={<LoadingScreen />}>
-      <div>{JSON.stringify(currentUser)}</div>
+      <main>
+        <div>Hello, {currentUser.username}</div>
+      </main>
     </Suspense>
   );
 }
