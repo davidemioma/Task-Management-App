@@ -60,7 +60,7 @@ const CreateWorkspace = () => {
 
       if (values.image) {
         formData.append(
-          "file",
+          "image",
           values.image instanceof File ? values.image : ""
         );
       }

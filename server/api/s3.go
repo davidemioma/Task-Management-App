@@ -1,42 +1,49 @@
 package main
 
 import (
+	"fmt"
 	"io"
-	"time"
+	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/lpernett/godotenv"
 )
 
-func generatePresignedURL(bucket string, key string, body io.ReadSeeker) (string, error) {
+func UploadToS3(bucket string, key string, body io.ReadSeeker) (error) {
+	envErr := godotenv.Load(".env")
+
+	if envErr != nil {
+	    log.Fatal("Error loading .env file")
+	}
+
 	sess, err := session.NewSession(&aws.Config{
-        Region: aws.String("eu-west-2")},
-    )
+        Region: aws.String("eu-west-2"),
+    })
 
 	if err != nil {
-        return "", err
+		fmt.Printf("Could not create AWS session: %v\n", err)
+
+        return err
     }
 
 	svc := s3.New(sess)
 
-	req, reqErr := svc.PutObjectRequest(&s3.PutObjectInput{
+	// Upload the object to S3
+	_, reqErr := svc.PutObject(&s3.PutObjectInput{
         Bucket: aws.String(bucket),
         Key:    aws.String(key),
         Body:   body,
     })
 
 	if reqErr != nil {
-        return "", err
+		fmt.Printf("PutObjectRequest Error: %v\n", reqErr)
+
+        return fmt.Errorf("failed to create PutObjectRequest: %v", reqErr)
     }
 
-	url, urlErr := req.Presign(15 * time.Minute)
-
-	if urlErr != nil {
-        return "", err
-    }
-
-	return url, nil
+	return nil
 }
 
 func getFileExtension(contentType string) string {

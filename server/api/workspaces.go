@@ -59,10 +59,10 @@ func (app *application) createWorkspaceHandler(w http.ResponseWriter, r *http.Re
 
 		fileExtension := getFileExtension(contentType)
 
-		key := fmt.Sprintf("uploads/%s%s", uniqueID, fileExtension)
+		key := "uploads/" + uniqueID + fileExtension
 
 		// Generate a pre-signed URL for S3 upload
-		presignedURL, s3Err := generatePresignedURL(app.storage.bucket, key, file)
+		s3Err := UploadToS3(app.storage.bucket, key, file)
 
 		if s3Err != nil {
 			fmt.Printf("Could not generate presigned URL: %v", s3Err)
@@ -72,7 +72,7 @@ func (app *application) createWorkspaceHandler(w http.ResponseWriter, r *http.Re
 			return
 		}
 
-		imageUrl = app.storage.cloudfront_url + "/" + presignedURL + "#t=1"
+		imageUrl = app.storage.cloudfront_url + "/" + key + "#t=1"
     }
 
 	// Create Workspace
