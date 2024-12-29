@@ -3,9 +3,8 @@
 import axios, { AxiosError } from "axios";
 import { revalidatePath } from "next/cache";
 import { currentUser } from "@clerk/nextjs/server";
-import { WorkspaceSchema, WorkspaceValidator } from "../validators/workspace";
 
-export const createWorkspace = async (values: WorkspaceValidator) => {
+export const createWorkspace = async (values: FormData) => {
   try {
     const user = await currentUser();
 
@@ -13,18 +12,9 @@ export const createWorkspace = async (values: WorkspaceValidator) => {
       throw new Error("Unauthorized, Youn need to sign in!");
     }
 
-    // Validate inputs
-    const validated = WorkspaceSchema.safeParse(values);
-
-    if (!validated.success) {
-      throw new Error("Invalid Inputs!");
-    }
-
     const res = await axios.post(
       `${process.env.NEXT_PUBLIC_BASE_API_URL}/workspaces`,
-      {
-        ...values,
-      },
+      values,
       {
         headers: {
           Authorization: `clerkId ${user.id}`,

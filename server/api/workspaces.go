@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/json"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"server/internal/database"
@@ -11,36 +11,76 @@ import (
 )
 
 func (app *application) createWorkspaceHandler(w http.ResponseWriter, r *http.Request, user database.User) {
-	type parameters struct {
-		Name string `json:"name"`
-	}
+	// Parse the multipart form
+    err := r.ParseMultipartForm(10 << 20)
 
-	// Validating body
-	decoder := json.NewDecoder(r.Body)
+    if err != nil {
+		fmt.Printf("Unable to parse form: %v", err)
 
-	params := parameters{}
+		respondWithError(w, http.StatusBadRequest, "Unable to parse form")
+      
+        return
+    }
 
-	err := decoder.Decode(&params)
+	 // Get the name from the form
+    name := r.FormValue("name")
 
-	if err != nil {
-		fmt.Printf("Error parsing JSON: %v", err)
-		
-		respondWithError(w, http.StatusBadRequest, "Error parsing JSON")
+    if name == "" {
+		fmt.Printf("Name is required")
 
-		return
-	}
-
-	if params.Name == "" {
 		respondWithError(w, http.StatusBadRequest, "Name is required")
+        
+        return
+    }
 
-		return
-	}
+    var imageUrl string
+
+	// Get the file from the form
+    file, fileHeader, fileErr := r.FormFile("image")
+
+    if fileErr == nil {
+		defer file.Close()
+
+		 // Validate content type
+		contentType := fileHeader.Header.Get("Content-Type")
+
+		valid := isValidContentType(contentType)
+
+		if !valid {
+			fmt.Printf("Invalid image type")
+
+			respondWithError(w, http.StatusBadRequest, "Invalid image type")
+
+			return
+        }
+
+		// Generate a unique key for the S3 object
+		uniqueID := uuid.New().String()
+
+		fileExtension := getFileExtension(contentType)
+
+		key := fmt.Sprintf("uploads/%s%s", uniqueID, fileExtension)
+
+		// Generate a pre-signed URL for S3 upload
+		presignedURL, s3Err := generatePresignedURL(app.storage.bucket, key, file)
+
+		if s3Err != nil {
+			fmt.Printf("Could not generate presigned URL: %v", s3Err)
+
+			respondWithError(w, http.StatusInternalServerError, "Could not generate presigned URL")
+
+			return
+		}
+
+		imageUrl = app.storage.cloudfront_url + "/" + presignedURL + "#t=1"
+    }
 
 	// Create Workspace
 	dbErr := app.storage.DB.CreateWorkspace(r.Context(), database.CreateWorkspaceParams{
 		ID: uuid.New(),
 		UserID: user.ID, 
-		Name: params.Name,
+		Name: name,
+		ImageUrl: sql.NullString{String: imageUrl, Valid: imageUrl != ""},
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
 	})

@@ -14,6 +14,8 @@ type config struct {}
 
 type storage struct {
 	DB *database.Queries
+	bucket string
+	cloudfront_url string
 }
 
 type application struct {

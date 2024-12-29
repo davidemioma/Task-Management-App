@@ -25,6 +25,18 @@ func main() {
 	    log.Fatal("PORT not found")
 	}
 
+	bucket := os.Getenv("AWS_BUCKET_NAME")
+
+	if bucket == ""{
+	    log.Fatal("AWS_BUCKET_NAME not found")
+	}
+
+	cloudfront_url := os.Getenv("AWS_CLOUD_FRONT_STREAM_URL")
+
+	if cloudfront_url == ""{
+	    log.Fatal("AWS_CLOUD_FRONT_STREAM_URL not found")
+	}
+
 	// Postgres DB
 	dbUrl := os.Getenv("DATABASE_URL")
 
@@ -42,6 +54,8 @@ func main() {
 
 	storage := storage{
 		DB: database.New(db),
+		bucket: bucket,
+		cloudfront_url: cloudfront_url,
 	}
 
 	app := application{

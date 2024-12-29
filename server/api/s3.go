@@ -38,3 +38,33 @@ func generatePresignedURL(bucket string, key string, body io.ReadSeeker) (string
 
 	return url, nil
 }
+
+func getFileExtension(contentType string) string {
+    switch contentType {
+		case "image/jpeg":
+			return ".jpeg"
+		case "image/jpg":
+			return ".jpg"	
+		case "image/png":
+			return ".png"
+		case "image/svg":
+			return ".svg"
+		case "image/webp":
+			return ".webp"
+		default:
+			return ""
+		}
+}
+
+func isValidContentType(contentType string) bool {
+    validTypes := map[string]bool{
+        "image/jpeg": true,
+        "image/jpg":  true,
+        "image/png":  true,
+        "image/svg":  true,
+        "image/webp": true,
+	}
+
+	return validTypes[contentType]
+}
+   
