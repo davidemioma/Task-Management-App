@@ -14,8 +14,8 @@ import (
 )
 
 const createWorkspace = `-- name: CreateWorkspace :exec
-INSERT INTO workspaces (id, user_id, name, image_url, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO workspaces (id, user_id, name, image_url, created_at, updated_at, invite_code)
+VALUES ($1, $2, $3, $4, $5, $6, encode(sha256(random()::text::bytea), 'hex'))
 `
 
 type CreateWorkspaceParams struct {
@@ -37,4 +37,43 @@ func (q *Queries) CreateWorkspace(ctx context.Context, arg CreateWorkspaceParams
 		arg.UpdatedAt,
 	)
 	return err
+}
+
+const getWorkspaces = `-- name: GetWorkspaces :many
+SELECT w.id, w.user_id, w.name, w.created_at, w.updated_at, w.image_url, w.invite_code 
+FROM workspaces w
+LEFT JOIN members m ON w.id = m.workspace_id
+WHERE w.user_id = $1 OR m.user_id = $1
+ORDER BY w.created_at DESC
+`
+
+func (q *Queries) GetWorkspaces(ctx context.Context, userID uuid.UUID) ([]Workspace, error) {
+	rows, err := q.db.QueryContext(ctx, getWorkspaces, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Workspace
+	for rows.Next() {
+		var i Workspace
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Name,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ImageUrl,
+			&i.InviteCode,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

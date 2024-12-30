@@ -3,15 +3,16 @@
 import React, { useState, useRef } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import { ImageIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
-import { useMutation } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { cn, getWorkspaceQueryId } from "@/lib/utils";
 import { createWorkspace } from "@/lib/actions/workspace";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   WorkspaceSchema,
   WorkspaceValidator,
@@ -32,7 +33,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-const CreateWorkspace = () => {
+type Props = {
+  trigger?: React.ReactNode;
+};
+
+const WorkspaceForm = ({ trigger }: Props) => {
+  const router = useRouter();
+
+  const queryClient = useQueryClient();
+
   const [open, setOpen] = useState(false);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -74,9 +83,17 @@ const CreateWorkspace = () => {
         toast.error("Something went wrong! could not create workspace.");
       }
 
-      toast.success(res.data);
+      queryClient.invalidateQueries({
+        queryKey: [getWorkspaceQueryId],
+      });
+
+      toast.success("New workspace created");
+
+      form.reset();
 
       setOpen(false);
+
+      router.push(`/workspaces/${res.data.id}`);
     },
     onError: (err) => {
       toast.error("Something went wrong! " + err.message);
@@ -96,9 +113,13 @@ const CreateWorkspace = () => {
         setOpen((prev) => !prev);
       }}
     >
-      <DialogTrigger className={cn(buttonVariants())}>
-        Create Workspace
-      </DialogTrigger>
+      {trigger ? (
+        <DialogTrigger>{trigger}</DialogTrigger>
+      ) : (
+        <DialogTrigger className={cn(buttonVariants())}>
+          Create Workspace
+        </DialogTrigger>
+      )}
 
       <DialogContent>
         <DialogHeader>
@@ -202,4 +223,4 @@ const CreateWorkspace = () => {
   );
 };
 
-export default CreateWorkspace;
+export default WorkspaceForm;

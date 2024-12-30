@@ -11,6 +11,15 @@ import (
 	"github.com/google/uuid"
 )
 
+type Member struct {
+	ID          uuid.UUID
+	UserID      uuid.UUID
+	WorkspaceID uuid.UUID
+	Role        string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
 type User struct {
 	ID        uuid.UUID
 	ClerkID   string
@@ -22,10 +31,11 @@ type User struct {
 }
 
 type Workspace struct {
-	ID        uuid.UUID
-	UserID    uuid.UUID
-	Name      string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	ImageUrl  sql.NullString
+	ID         uuid.UUID
+	UserID     uuid.UUID
+	Name       string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	ImageUrl   sql.NullString
+	InviteCode string
 }

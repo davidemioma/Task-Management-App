@@ -76,8 +76,14 @@ func (app *application) createWorkspaceHandler(w http.ResponseWriter, r *http.Re
     }
 
 	// Create Workspace
+	id := uuid.New()
+
+	type returnType struct {
+		ID uuid.UUID `json:"id"`
+	}
+
 	dbErr := app.storage.DB.CreateWorkspace(r.Context(), database.CreateWorkspaceParams{
-		ID: uuid.New(),
+		ID: id,
 		UserID: user.ID, 
 		Name: name,
 		ImageUrl: sql.NullString{String: imageUrl, Valid: imageUrl != ""},
@@ -93,5 +99,32 @@ func (app *application) createWorkspaceHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, "New workspace created")
+	// Create member
+	memberErr := app.createMemberHandler(r.Context(), id, user.ID, "ADMIN")
+
+	if memberErr != nil {
+		fmt.Printf("Couldn't create member: %v", memberErr)
+
+		respondWithError(w, http.StatusInternalServerError, "Couldn't create member")
+
+		return
+	}
+
+	respondWithJSON(w, http.StatusCreated, returnType{
+		ID: id,
+	})
+}
+
+func (app *application) getWorkspacesByUserId(w http.ResponseWriter, r *http.Request, user database.User) {
+	workspaces, err := app.storage.DB.GetWorkspaces(r.Context(), user.ID)
+
+	if err != nil {
+		fmt.Printf("Couldn't get workspaces: %v", err)
+
+		respondWithError(w, http.StatusNotFound, "Couldn't get workspaces")
+
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, databaseWorkspacesToWorkspaces(workspaces))
 }

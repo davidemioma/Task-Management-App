@@ -1,8 +1,7 @@
-import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import ErrorPage from "@/components/ErrorPage";
 import { getCurrentUser } from "@/lib/data/auth";
-import LoadingScreen from "@/components/LoadingScreen";
+import { getWorkspacesByUserId } from "@/lib/data/workspaces";
 
 export default async function Home() {
   const currentUser = await getCurrentUser();
@@ -23,11 +22,11 @@ export default async function Home() {
     );
   }
 
-  return (
-    <Suspense fallback={<LoadingScreen />}>
-      <main>
-        <div>Hello, {currentUser.username}</div>
-      </main>
-    </Suspense>
-  );
+  const workspaces = await getWorkspacesByUserId();
+
+  if (workspaces.length > 0) {
+    return redirect(`/workspaces/${workspaces[0].id}`);
+  }
+
+  return redirect("/workspaces/create");
 }

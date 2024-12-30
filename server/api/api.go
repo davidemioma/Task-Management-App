@@ -58,6 +58,8 @@ func (app *application) mount() http.Handler {
 
 		r.Get("/auth/user", app.middlewareAuth(app.getUserByClerkId))
 
+		r.Get("/workspaces", app.middlewareAuth(app.getWorkspacesByUserId))
+
 		r.Post("/workspaces", app.middlewareAuth(app.createWorkspaceHandler))
 	})
 

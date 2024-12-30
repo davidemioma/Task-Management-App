@@ -7,3 +7,12 @@ export type UserProps = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type WorkspaceProps = {
+  id: string;
+  userId: string;
+  name: string;
+  imageUrl: string;
+  createdAt: string;
+  updatedAt: string;
+};

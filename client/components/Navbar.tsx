@@ -1,8 +1,8 @@
 import React from "react";
 import { UserButton } from "@clerk/nextjs";
 import { getCurrentUser } from "@/lib/data/auth";
+import WorkspaceForm from "./forms/WorkspaceForm";
 import MobileSidebar from "./sidebar/MobileSidebar";
-import CreateWorkspace from "./forms/CreateWorkspace";
 
 const Navbar = async () => {
   const currentUser = await getCurrentUser();
@@ -29,7 +29,7 @@ const Navbar = async () => {
       <div className="flex items-center gap-2.5">
         <UserButton signInUrl="/auth/sign-in" />
 
-        <CreateWorkspace />
+        <WorkspaceForm />
       </div>
     </nav>
   );
