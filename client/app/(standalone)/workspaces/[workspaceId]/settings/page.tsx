@@ -8,6 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { getWorkspaceById } from "@/lib/data/workspaces";
 import EditWorkspace from "@/components/forms/workspace/EditWorkspace";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import DeleteWorkspace from "@/components/forms/workspace/DeleteWorkspace";
 
 export default async function WorkspaceSettingsPage({
   params,
@@ -43,26 +44,41 @@ export default async function WorkspaceSettingsPage({
   }
 
   return (
-    <div className="h-[calc(100vh-160px)] w-full flex items-center justify-center">
-      <Card className="w-full max-w-xl">
-        <CardHeader className="relative flex flex-row items-center mb-2">
-          <Link
-            href={`/workspaces/${workspace.id}`}
-            className={cn(buttonVariants({ variant: "secondary" }))}
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </Link>
+    <div className="min-h-[calc(100vh-160px)] w-full flex items-center justify-center">
+      <div className="space-y-4">
+        <Card className="w-full max-w-xl">
+          <CardHeader className="flex flex-col gap-4">
+            <Link
+              href={`/workspaces/${workspace.id}`}
+              className={cn("w-fit", buttonVariants({ variant: "secondary" }))}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </Link>
 
-          <CardTitle className="absolute -translate-y-1/2 top-1/2 -translate-x-1/2 left-1/2">
-            Edit {workspace.name}
-          </CardTitle>
-        </CardHeader>
+            <CardTitle>Edit {workspace.name}</CardTitle>
+          </CardHeader>
 
-        <CardContent>
-          <EditWorkspace data={workspace} />
-        </CardContent>
-      </Card>
+          <CardContent>
+            <EditWorkspace data={workspace} />
+          </CardContent>
+        </Card>
+
+        <Card className="w-full max-w-xl">
+          <CardContent className="pt-7">
+            <div className="flex flex-col mb-4">
+              <h3 className="font-bold">Danger Zone</h3>
+
+              <p className="text-sm text-muted-foreground">
+                Deleting a workspace is irreversible and will remove all
+                associated data.
+              </p>
+            </div>
+
+            <DeleteWorkspace workspaceId={workspace.id} />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

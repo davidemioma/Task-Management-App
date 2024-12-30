@@ -65,6 +65,8 @@ func (app *application) mount() http.Handler {
 		r.Get("/workspaces/{workspaceId}", app.middlewareAuth(app.getWorkspaceById))
 
 		r.Patch("/workspaces/{workspaceId}", app.middlewareAuth(app.updateWorkspaceHandler))
+
+		r.Delete("/workspaces/{workspaceId}", app.middlewareAuth(app.deleteWorkspaceHandler))
 	})
 
 	return r

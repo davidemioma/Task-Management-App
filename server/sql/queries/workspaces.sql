@@ -25,3 +25,7 @@ WHERE m.user_id = $1 AND m.workspace_id = $2;
 
 -- name: GetWorkspaceById :one
 SELECT * FROM workspaces WHERE id = $1 AND user_id = $2;
+
+-- name: DeleteWorkspace :exec
+DELETE FROM workspaces
+WHERE id = $1 AND user_id = $2;

@@ -69,8 +69,8 @@ const EditWorkspace = ({ data, onClose }: Props) => {
       return result;
     },
     onSuccess: (res) => {
-      if (res.status !== 201) {
-        toast.error("Something went wrong! could not create workspace.");
+      if (res.status !== 200) {
+        toast.error("Something went wrong! could not update workspace.");
       }
 
       queryClient.invalidateQueries({

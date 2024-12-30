@@ -142,9 +142,17 @@ func (app *application) updateWorkspaceHandler(w http.ResponseWriter, r *http.Re
         return
     }
 
+	validId, idErr := uuid.Parse(workspace_id)
+
+	if idErr != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid Workspace ID format")
+        
+        return
+	}
+
 	// Check if workspace exists, user is a member and Admin
 	workspace, checkErr := app.storage.DB.GetWorkspaceAdmin(r.Context(), database.GetWorkspaceAdminParams{
-		WorkspaceID: uuid.Must(uuid.Parse(workspace_id)),
+		WorkspaceID: validId,
 		UserID: user.ID,
 	})
 
@@ -283,7 +291,7 @@ func (app *application) getWorkspaceById(w http.ResponseWriter, r *http.Request,
 	validId, idErr := uuid.Parse(workspaceId)
 
 	if idErr != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid Workspace ID format") // More context in error message
+		respondWithError(w, http.StatusBadRequest, "Invalid Workspace ID format")
         
         return
 	}
@@ -303,3 +311,78 @@ func (app *application) getWorkspaceById(w http.ResponseWriter, r *http.Request,
 
 	respondWithJSON(w, http.StatusOK, databaseWorkspacetoWorkspace(workspace))
 }
+
+func (app *application) deleteWorkspaceHandler(w http.ResponseWriter, r *http.Request, user database.User) {
+	// Get the workspace id from the URL params
+    workspaceId := chi.URLParam(r, "workspaceId")
+
+    if workspaceId == "" {
+		fmt.Printf("Workspace ID is required")
+
+		respondWithError(w, http.StatusBadRequest, "Workspace ID required")
+        
+        return
+    }
+
+	validId, idErr := uuid.Parse(workspaceId)
+
+	if idErr != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid Workspace ID format")
+        
+        return
+	}
+
+	// Check if workspace exists, user is a member and Admin
+	workspace, checkErr := app.storage.DB.GetWorkspaceAdmin(r.Context(), database.GetWorkspaceAdminParams{
+		WorkspaceID: validId,
+		UserID: user.ID,
+	})
+
+	if checkErr != nil {
+		fmt.Printf("Couldn't find workspace: %v", checkErr)
+
+		respondWithError(w, http.StatusNotFound, "Couldn't find workspace")
+
+		return
+	}
+
+	if workspace.Role != "ADMIN" {
+		fmt.Printf("User is not an admin")
+
+		respondWithError(w, http.StatusUnauthorized, "You are not authorized to perform this task!")
+
+		return
+	}
+
+	// Delete image from S3 bucker
+	if workspace.ImageUrl.Valid {
+		s3Key := extractKeyFromImageUrl(workspace.ImageUrl.String)
+
+		s3DelErr := DeleteObjectFromS3(app.storage.bucket, s3Key)
+
+		if s3DelErr != nil {
+			fmt.Printf("Could not delete object: %v", s3DelErr)
+
+			respondWithError(w, http.StatusInternalServerError, "Could not delete object")
+
+			return
+		}
+	}
+
+	// Delete Workspace
+	dbErr := app.storage.DB.DeleteWorkspace(r.Context(), database.DeleteWorkspaceParams{
+		ID: workspace.ID,
+		UserID: user.ID,
+	})
+
+	if dbErr != nil {
+		fmt.Printf("Couldn't delete workspace: %v", dbErr)
+
+		respondWithError(w, http.StatusInternalServerError, "Couldn't delete workspace")
+
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, "Workspace has been deleted!")
+}
+
