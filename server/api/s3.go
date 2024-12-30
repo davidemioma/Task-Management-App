@@ -46,32 +46,49 @@ func UploadToS3(bucket string, key string, body io.ReadSeeker) (error) {
 	return nil
 }
 
-func getFileExtension(contentType string) string {
-    switch contentType {
-		case "image/jpeg":
-			return ".jpeg"
-		case "image/jpg":
-			return ".jpg"	
-		case "image/png":
-			return ".png"
-		case "image/svg":
-			return ".svg"
-		case "image/webp":
-			return ".webp"
-		default:
-			return ""
-		}
-}
+func DeleteObjectFromS3(bucket string, key string) error {
+    envErr := godotenv.Load(".env")
 
-func isValidContentType(contentType string) bool {
-    validTypes := map[string]bool{
-        "image/jpeg": true,
-        "image/jpg":  true,
-        "image/png":  true,
-        "image/svg":  true,
-        "image/webp": true,
+	if envErr != nil {
+	    log.Fatal("Error loading .env file")
 	}
 
-	return validTypes[contentType]
+    sess, sessErr := session.NewSession(&aws.Config{
+        Region: aws.String("eu-west-2"),
+    })
+
+	if sessErr != nil {
+		fmt.Printf("Could not create AWS session: %v\n", sessErr)
+
+        return sessErr
+    }
+
+    svc := s3.New(sess)
+
+    // Delete the object
+    _, err := svc.DeleteObject(&s3.DeleteObjectInput{
+        Bucket: aws.String(bucket),
+        Key:    aws.String(key),
+    })
+
+    if err != nil {
+        fmt.Printf("DeleteObject Error: %v\n", err)
+
+        return err
+    }
+
+    // Wait until the object is deleted
+    wait_err := svc.WaitUntilObjectNotExists(&s3.HeadObjectInput{
+        Bucket: aws.String(bucket),
+        Key:    aws.String(key),
+    })
+
+    if wait_err != nil {
+        fmt.Printf("WaitUntilObjectNotExists Error: %v\n", err)
+
+        return wait_err
+    }
+
+    return nil
 }
    

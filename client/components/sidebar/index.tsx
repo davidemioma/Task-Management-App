@@ -1,5 +1,5 @@
 import React from "react";
-import Link from "next/link";
+import Logo from "../Logo";
 import Navigations from "./Navigations";
 import { Separator } from "../ui/separator";
 import WorkspaceSwitcher from "./WorkspaceSwitcher";
@@ -7,9 +7,7 @@ import WorkspaceSwitcher from "./WorkspaceSwitcher";
 const Sidebar = () => {
   return (
     <div className="bg-neutral-100 w-full h-full p-4">
-      <Link href="/" className="text-xl font-bold">
-        🐇 Task Management
-      </Link>
+      <Logo />
 
       <Separator className="my-4" />
 

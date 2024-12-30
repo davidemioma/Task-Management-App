@@ -1,7 +1,7 @@
 import React from "react";
 import { UserButton } from "@clerk/nextjs";
 import { getCurrentUser } from "@/lib/data/auth";
-import WorkspaceForm from "./forms/WorkspaceForm";
+import WorkspaceForm from "./forms/workspace/WorkspaceForm";
 import MobileSidebar from "./sidebar/MobileSidebar";
 
 const Navbar = async () => {

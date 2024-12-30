@@ -24,3 +24,24 @@ export const getWorkspacesByUserId = async () => {
 
   return result;
 };
+
+export const getWorkspaceById = async (workspaceId: string) => {
+  const user = await currentUser();
+
+  if (!user) {
+    return null;
+  }
+
+  const res = await axios.get(
+    `${process.env.NEXT_PUBLIC_BASE_API_URL}/workspaces/${workspaceId}`,
+    {
+      headers: {
+        Authorization: `clerkId ${user.id}`,
+      },
+    }
+  );
+
+  const result = (await res.data) as WorkspaceProps | null;
+
+  return result;
+};

@@ -5,7 +5,7 @@ import { WorkspaceProps } from "@/types";
 import { getWorkspaceQueryId } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { RiAddCircleFill } from "react-icons/ri";
-import WorkspaceForm from "../forms/WorkspaceForm";
+import WorkspaceForm from "../forms/workspace/WorkspaceForm";
 import SelectWorkspaces from "./SelectWorkspaces";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getWorkspacesByUserId } from "@/lib/data/workspaces";
