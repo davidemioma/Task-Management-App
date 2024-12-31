@@ -42,6 +42,7 @@ type Workspace struct {
 	CreatedAt time.Time  `json:"createdAt"`
 	UpdatedAt time.Time  `json:"updatedAt"`
 	ImageUrl  string     `json:"imageUrl"`
+	InviteCode string    `json:"inviteCode"`
 }
 
 func databaseWorkspacetoWorkspace(workspace database.Workspace) Workspace {
@@ -56,6 +57,7 @@ func databaseWorkspacetoWorkspace(workspace database.Workspace) Workspace {
 		UserID: workspace.UserID,
 		Name: workspace.Name,
 		ImageUrl: imageUrl,
+		InviteCode: workspace.InviteCode,
 		CreatedAt: workspace.CreatedAt,
 		UpdatedAt: workspace.UpdatedAt,
 	}

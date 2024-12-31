@@ -7,8 +7,9 @@ import { notFound, redirect } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { getWorkspaceById } from "@/lib/data/workspaces";
 import EditWorkspace from "@/components/forms/workspace/EditWorkspace";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import DeleteWorkspace from "@/components/forms/workspace/DeleteWorkspace";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import WorkspaceInvite from "@/components/forms/workspace/WorkspaceInvite";
 
 export default async function WorkspaceSettingsPage({
   params,
@@ -61,6 +62,23 @@ export default async function WorkspaceSettingsPage({
 
           <CardContent>
             <EditWorkspace data={workspace} />
+          </CardContent>
+        </Card>
+
+        <Card className="w-full max-w-xl">
+          <CardContent className="pt-7">
+            <div className="flex flex-col mb-4">
+              <h3 className="font-bold">Invite Members</h3>
+
+              <p className="text-sm text-muted-foreground">
+                Use the invite link to add members to your workspace.
+              </p>
+            </div>
+
+            <WorkspaceInvite
+              workspaceId={workspace.id}
+              initialCode={workspace.inviteCode}
+            />
           </CardContent>
         </Card>
 

@@ -67,6 +67,8 @@ func (app *application) mount() http.Handler {
 		r.Patch("/workspaces/{workspaceId}", app.middlewareAuth(app.updateWorkspaceHandler))
 
 		r.Delete("/workspaces/{workspaceId}", app.middlewareAuth(app.deleteWorkspaceHandler))
+
+		r.Patch("/workspaces/{workspaceId}/invite-code", app.middlewareAuth(app.updateInviteCodeHandler))
 	})
 
 	return r

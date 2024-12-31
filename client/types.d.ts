@@ -12,6 +12,7 @@ export type WorkspaceProps = {
   id: string;
   userId: string;
   name: string;
+  inviteCode: string;
   imageUrl: string;
   createdAt: string;
   updatedAt: string;

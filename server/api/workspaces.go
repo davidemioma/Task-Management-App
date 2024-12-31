@@ -386,3 +386,62 @@ func (app *application) deleteWorkspaceHandler(w http.ResponseWriter, r *http.Re
 	respondWithJSON(w, http.StatusOK, "Workspace has been deleted!")
 }
 
+func (app *application) updateInviteCodeHandler(w http.ResponseWriter, r *http.Request, user database.User) {
+	// Get the workspace id from the URL params
+    workspaceId := chi.URLParam(r, "workspaceId")
+
+    if workspaceId == "" {
+		fmt.Printf("Workspace ID is required")
+
+		respondWithError(w, http.StatusBadRequest, "Workspace ID required")
+        
+        return
+    }
+
+	validId, idErr := uuid.Parse(workspaceId)
+
+	if idErr != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid Workspace ID format")
+        
+        return
+	}
+
+	// Check if workspace exists, user is a member and Admin
+	workspace, checkErr := app.storage.DB.GetWorkspaceAdmin(r.Context(), database.GetWorkspaceAdminParams{
+		WorkspaceID: validId,
+		UserID: user.ID,
+	})
+
+	if checkErr != nil {
+		fmt.Printf("Couldn't find workspace: %v", checkErr)
+
+		respondWithError(w, http.StatusNotFound, "Couldn't find workspace")
+
+		return
+	}
+
+	if workspace.Role != "ADMIN" {
+		fmt.Printf("User is not an admin")
+
+		respondWithError(w, http.StatusUnauthorized, "You are not authorized to perform this task!")
+
+		return
+	}
+
+	// Update Workspace invite code
+	dbErr := app.storage.DB.UpdateWorkspaceInviteCode(r.Context(), database.UpdateWorkspaceInviteCodeParams{
+		ID: workspace.ID,
+		UserID: user.ID,
+	})
+
+	if dbErr != nil {
+		fmt.Printf("Couldn't update workspace invite code: %v", dbErr)
+
+		respondWithError(w, http.StatusInternalServerError, "Couldn't update workspace invite code")
+
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, "Updated workspace invite code!")
+}
+

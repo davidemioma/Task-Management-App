@@ -29,3 +29,10 @@ SELECT * FROM workspaces WHERE id = $1 AND user_id = $2;
 -- name: DeleteWorkspace :exec
 DELETE FROM workspaces
 WHERE id = $1 AND user_id = $2;
+
+-- name: UpdateWorkspaceInviteCode :exec
+UPDATE workspaces
+SET 
+    invite_code = encode(sha256(random()::text::bytea), 'hex'),
+    updated_at = NOW()
+WHERE id = $1 AND user_id = $2; 

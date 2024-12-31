@@ -181,3 +181,21 @@ func (q *Queries) UpdateWorkspace(ctx context.Context, arg UpdateWorkspaceParams
 	)
 	return err
 }
+
+const updateWorkspaceInviteCode = `-- name: UpdateWorkspaceInviteCode :exec
+UPDATE workspaces
+SET 
+    invite_code = encode(sha256(random()::text::bytea), 'hex'),
+    updated_at = NOW()
+WHERE id = $1 AND user_id = $2
+`
+
+type UpdateWorkspaceInviteCodeParams struct {
+	ID     uuid.UUID
+	UserID uuid.UUID
+}
+
+func (q *Queries) UpdateWorkspaceInviteCode(ctx context.Context, arg UpdateWorkspaceInviteCodeParams) error {
+	_, err := q.db.ExecContext(ctx, updateWorkspaceInviteCode, arg.ID, arg.UserID)
+	return err
+}
