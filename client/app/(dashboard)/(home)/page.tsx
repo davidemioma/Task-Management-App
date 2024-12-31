@@ -24,9 +24,9 @@ export default async function Home() {
 
   const workspaces = await getWorkspacesByUserId();
 
-  if (workspaces.length > 0) {
+  if (!workspaces || workspaces.length < 1) {
+    return redirect("/workspaces/create");
+  } else {
     return redirect(`/workspaces/${workspaces[0].id}`);
   }
-
-  return redirect("/workspaces/create");
 }

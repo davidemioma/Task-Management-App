@@ -37,3 +37,26 @@ func (q *Queries) CreateMember(ctx context.Context, arg CreateMemberParams) erro
 	)
 	return err
 }
+
+const getMember = `-- name: GetMember :one
+SELECT id, user_id, workspace_id, role, created_at, updated_at FROM members WHERE workspace_id = $1 AND user_id = $2
+`
+
+type GetMemberParams struct {
+	WorkspaceID uuid.UUID
+	UserID      uuid.UUID
+}
+
+func (q *Queries) GetMember(ctx context.Context, arg GetMemberParams) (Member, error) {
+	row := q.db.QueryRowContext(ctx, getMember, arg.WorkspaceID, arg.UserID)
+	var i Member
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.WorkspaceID,
+		&i.Role,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

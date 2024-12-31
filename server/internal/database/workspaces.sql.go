@@ -41,7 +41,10 @@ func (q *Queries) CreateWorkspace(ctx context.Context, arg CreateWorkspaceParams
 
 const deleteWorkspace = `-- name: DeleteWorkspace :exec
 DELETE FROM workspaces
-WHERE id = $1 AND user_id = $2
+WHERE workspaces.id = $1 AND (workspaces.user_id = $2 OR EXISTS (
+    SELECT 1 FROM members m 
+    WHERE m.workspace_id = workspaces.id AND m.user_id = $2 AND m.role = 'ADMIN'
+))
 `
 
 type DeleteWorkspaceParams struct {
@@ -52,6 +55,23 @@ type DeleteWorkspaceParams struct {
 func (q *Queries) DeleteWorkspace(ctx context.Context, arg DeleteWorkspaceParams) error {
 	_, err := q.db.ExecContext(ctx, deleteWorkspace, arg.ID, arg.UserID)
 	return err
+}
+
+const getSigleWorkspace = `-- name: GetSigleWorkspace :one
+SELECT id, name, invite_code FROM workspaces WHERE id = $1
+`
+
+type GetSigleWorkspaceRow struct {
+	ID         uuid.UUID
+	Name       string
+	InviteCode string
+}
+
+func (q *Queries) GetSigleWorkspace(ctx context.Context, id uuid.UUID) (GetSigleWorkspaceRow, error) {
+	row := q.db.QueryRowContext(ctx, getSigleWorkspace, id)
+	var i GetSigleWorkspaceRow
+	err := row.Scan(&i.ID, &i.Name, &i.InviteCode)
+	return i, err
 }
 
 const getWorkspaceAdmin = `-- name: GetWorkspaceAdmin :one
@@ -94,7 +114,9 @@ func (q *Queries) GetWorkspaceAdmin(ctx context.Context, arg GetWorkspaceAdminPa
 }
 
 const getWorkspaceById = `-- name: GetWorkspaceById :one
-SELECT id, user_id, name, created_at, updated_at, image_url, invite_code FROM workspaces WHERE id = $1 AND user_id = $2
+SELECT w.id, w.user_id, name, w.created_at, w.updated_at, image_url, invite_code, m.id, m.user_id, workspace_id, role, m.created_at, m.updated_at FROM workspaces w
+LEFT JOIN members m ON w.id = m.workspace_id
+WHERE w.id = $1 AND (w.user_id = $2 OR m.user_id = $2)
 `
 
 type GetWorkspaceByIdParams struct {
@@ -102,9 +124,25 @@ type GetWorkspaceByIdParams struct {
 	UserID uuid.UUID
 }
 
-func (q *Queries) GetWorkspaceById(ctx context.Context, arg GetWorkspaceByIdParams) (Workspace, error) {
+type GetWorkspaceByIdRow struct {
+	ID          uuid.UUID
+	UserID      uuid.UUID
+	Name        string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	ImageUrl    sql.NullString
+	InviteCode  string
+	ID_2        uuid.NullUUID
+	UserID_2    uuid.NullUUID
+	WorkspaceID uuid.NullUUID
+	Role        sql.NullString
+	CreatedAt_2 sql.NullTime
+	UpdatedAt_2 sql.NullTime
+}
+
+func (q *Queries) GetWorkspaceById(ctx context.Context, arg GetWorkspaceByIdParams) (GetWorkspaceByIdRow, error) {
 	row := q.db.QueryRowContext(ctx, getWorkspaceById, arg.ID, arg.UserID)
-	var i Workspace
+	var i GetWorkspaceByIdRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
@@ -113,6 +151,12 @@ func (q *Queries) GetWorkspaceById(ctx context.Context, arg GetWorkspaceByIdPara
 		&i.UpdatedAt,
 		&i.ImageUrl,
 		&i.InviteCode,
+		&i.ID_2,
+		&i.UserID_2,
+		&i.WorkspaceID,
+		&i.Role,
+		&i.CreatedAt_2,
+		&i.UpdatedAt_2,
 	)
 	return i, err
 }
@@ -162,7 +206,10 @@ SET
     name = $1,
     image_url = $2,
     updated_at = NOW()
-WHERE id = $3 AND user_id = $4
+WHERE workspaces.id = $3 AND (workspaces.user_id = $4 OR EXISTS (
+    SELECT 1 FROM members m 
+    WHERE m.workspace_id = workspaces.id AND m.user_id = $4 AND m.role = 'ADMIN'
+))
 `
 
 type UpdateWorkspaceParams struct {
@@ -187,7 +234,10 @@ UPDATE workspaces
 SET 
     invite_code = encode(sha256(random()::text::bytea), 'hex'),
     updated_at = NOW()
-WHERE id = $1 AND user_id = $2
+WHERE workspaces.id = $1 AND (workspaces.user_id = $2 OR EXISTS (
+    SELECT 1 FROM members m 
+    WHERE m.workspace_id = workspaces.id AND m.user_id = $2 AND m.role = 'ADMIN'
+))
 `
 
 type UpdateWorkspaceInviteCodeParams struct {

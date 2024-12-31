@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"server/internal/database"
@@ -309,7 +310,7 @@ func (app *application) getWorkspaceById(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, databaseWorkspacetoWorkspace(workspace))
+	respondWithJSON(w, http.StatusOK, databaseWorkspacetoSafeWorkspace(workspace))
 }
 
 func (app *application) deleteWorkspaceHandler(w http.ResponseWriter, r *http.Request, user database.User) {
@@ -444,4 +445,125 @@ func (app *application) updateInviteCodeHandler(w http.ResponseWriter, r *http.R
 
 	respondWithJSON(w, http.StatusOK, "Updated workspace invite code!")
 }
+
+func (app *application) joinWorkspaceHandler(w http.ResponseWriter, r *http.Request, user database.User) {
+	// Get the invite code
+	type parameters struct {
+		Code  string  `json:"code"`
+	}
+
+	// Validating body
+	decoder := json.NewDecoder(r.Body)
+
+	params := parameters{}
+
+	err := decoder.Decode(&params)
+
+	if err != nil {
+		fmt.Printf("Error parsing JSON: %v", err)
+		
+		respondWithError(w, http.StatusBadRequest, "Error parsing JSON")
+
+		return
+	}
+
+	if params.Code == "" {
+		respondWithError(w, http.StatusBadRequest, "Invite code is required")
+
+		return
+	}
+
+	// Get the workspace id from the URL params
+    workspaceId := chi.URLParam(r, "workspaceId")
+
+    if workspaceId == "" {
+		fmt.Printf("Workspace ID is required")
+
+		respondWithError(w, http.StatusBadRequest, "Workspace ID required")
+        
+        return
+    }
+
+	validId, idErr := uuid.Parse(workspaceId)
+
+	if idErr != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid Workspace ID format")
+        
+        return
+	}
+
+	// Check if workspace exists
+	workspace, checkErr := app.storage.DB.GetSigleWorkspace(r.Context(), validId)
+
+	if checkErr != nil {
+		fmt.Printf("Couldn't find workspace: %v", checkErr)
+
+		respondWithError(w, http.StatusNotFound, "Couldn't find workspace")
+
+		return
+	}
+
+	// Check if user is a member
+	member := app.getMemberHandler(r.Context(), workspace.ID, user.ID)
+
+	if member.ID != uuid.Nil {
+		respondWithJSON(w, http.StatusOK, "Already a member")
+        
+        return
+	}
+
+	// Check if workspace code equals code
+	if workspace.InviteCode != params.Code {
+		respondWithError(w, http.StatusUnauthorized, "Invite code is not valid")
+
+		return
+	}
+
+	// Create a new member
+	memberErr := app.createMemberHandler(r.Context(), workspace.ID, user.ID, "MEMBER")
+
+	if memberErr != nil {
+		fmt.Printf("Couldn't create member: %v", memberErr)
+
+		respondWithError(w, http.StatusInternalServerError, "Couldn't create member")
+
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, "Your invite was accepted!")
+}
+
+func (app *application) getSigleWorkspace(w http.ResponseWriter, r *http.Request, user database.User) {
+	// Get the workspace id from the URL params
+    workspaceId := chi.URLParam(r, "workspaceId")
+
+    if workspaceId == "" {
+		fmt.Printf("Workspace ID is required")
+
+		respondWithError(w, http.StatusBadRequest, "Workspace ID required")
+        
+        return
+    }
+
+	validId, idErr := uuid.Parse(workspaceId)
+
+	if idErr != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid Workspace ID format")
+        
+        return
+	}
+
+	workspace, err := app.storage.DB.GetSigleWorkspace(r.Context(), validId)
+
+	if err != nil {
+		fmt.Printf("Couldn't get workspace: %v", err)
+
+		respondWithError(w, http.StatusNotFound, "Couldn't get workspace")
+
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, databaseWorkspacetoSingleWorkspace(workspace))
+}
+
 

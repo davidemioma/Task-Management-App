@@ -17,7 +17,7 @@ type Props = {
 const WorkspaceInvite = ({ workspaceId, initialCode }: Props) => {
   const queryClient = useQueryClient();
 
-  const url = `${window.location.origin}/workspaces/${workspaceId}/join/${initialCode}`;
+  const url = `${window.location.origin}/workspaces/${workspaceId}/join?code=${initialCode}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(url).then(() => {
@@ -41,7 +41,7 @@ const WorkspaceInvite = ({ workspaceId, initialCode }: Props) => {
         queryKey: [getWorkspaceQueryId],
       });
 
-      toast.success("Workspace Updated!");
+      toast.success("Invite Code Updated!");
     },
     onError: (err) => {
       toast.error("Something went wrong! " + err.message);

@@ -24,3 +24,16 @@ func (app *application) createMemberHandler(ctx context.Context, workspace_id uu
 
 	return nil
 }
+
+func (app *application) getMemberHandler(ctx context.Context, workspace_id uuid.UUID, user_id uuid.UUID) (database.Member) {
+	member, err := app.storage.DB.GetMember(ctx, database.GetMemberParams{
+		UserID: user_id,
+		WorkspaceID: workspace_id,
+	})
+
+	if err != nil {
+		return database.Member{}
+	}
+
+	return member
+}

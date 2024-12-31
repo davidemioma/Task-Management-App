@@ -45,6 +45,11 @@ type Workspace struct {
 	InviteCode string    `json:"inviteCode"`
 }
 
+type SigleWorkspace struct {
+	ID        uuid.UUID  `json:"id"`
+	Name      string     `json:"name"`
+}
+
 func databaseWorkspacetoWorkspace(workspace database.Workspace) Workspace {
 	var imageUrl string
 
@@ -60,6 +65,31 @@ func databaseWorkspacetoWorkspace(workspace database.Workspace) Workspace {
 		InviteCode: workspace.InviteCode,
 		CreatedAt: workspace.CreatedAt,
 		UpdatedAt: workspace.UpdatedAt,
+	}
+}
+
+func databaseWorkspacetoSafeWorkspace(workspace database.GetWorkspaceByIdRow) Workspace {
+	var imageUrl string
+
+	if workspace.ImageUrl.Valid {
+		imageUrl = workspace.ImageUrl.String
+	}
+
+	return Workspace{
+		ID: workspace.ID,
+		UserID: workspace.UserID,
+		Name: workspace.Name,
+		ImageUrl: imageUrl,
+		InviteCode: workspace.InviteCode,
+		CreatedAt: workspace.CreatedAt,
+		UpdatedAt: workspace.UpdatedAt,
+	}
+}
+
+func databaseWorkspacetoSingleWorkspace(workspace database.GetSigleWorkspaceRow) SigleWorkspace {
+	return SigleWorkspace{
+		ID: workspace.ID,
+		Name: workspace.Name,
 	}
 }
 

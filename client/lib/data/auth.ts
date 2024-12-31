@@ -4,12 +4,13 @@ import axios from "axios";
 import { cache } from "react";
 import { UserProps } from "@/types";
 import { currentUser } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
 export const getCurrentUser = cache(async () => {
   const user = await currentUser();
 
   if (!user) {
-    return null;
+    return redirect("/auth/sign-in");
   }
 
   const res = await axios.get(

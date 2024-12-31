@@ -64,11 +64,15 @@ func (app *application) mount() http.Handler {
 
 		r.Get("/workspaces/{workspaceId}", app.middlewareAuth(app.getWorkspaceById))
 
+		r.Get("/workspaces/{workspaceId}/single", app.middlewareAuth(app.getSigleWorkspace))
+
 		r.Patch("/workspaces/{workspaceId}", app.middlewareAuth(app.updateWorkspaceHandler))
 
 		r.Delete("/workspaces/{workspaceId}", app.middlewareAuth(app.deleteWorkspaceHandler))
 
 		r.Patch("/workspaces/{workspaceId}/invite-code", app.middlewareAuth(app.updateInviteCodeHandler))
+
+		r.Post("/workspaces/{workspaceId}/join", app.middlewareAuth(app.joinWorkspaceHandler))
 	})
 
 	return r
