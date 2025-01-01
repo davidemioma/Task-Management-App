@@ -102,3 +102,39 @@ func databaseWorkspacesToWorkspaces(workspaces []database.Workspace) [] Workspac
 
 	return newWorkspaces
 }
+
+type WorkspaceMembers struct {
+	ID          uuid.UUID   `json:"id"`
+	UserID      uuid.UUID   `json:"userId"`
+	WorkspaceID uuid.UUID   `json:"workspaceId"`
+	Role        string      `json:"role"`
+	CreatedAt   time.Time   `json:"createdAt"`
+	UpdatedAt   time.Time   `json:"updatedAt"`
+	Username    string      `json:"username"`
+	Email       string      `json:"email"`
+	Image       string      `json:"image"`
+}
+
+func databaseMemberToMember(member database.GetWorkspaceMembersRow) WorkspaceMembers {
+	return WorkspaceMembers{
+		ID: member.ID,
+		UserID: member.UserID,
+		WorkspaceID: member.WorkspaceID,
+		Role: member.Role,
+		CreatedAt: member.CreatedAt,
+		UpdatedAt: member.UpdatedAt,
+		Username: member.Username,
+		Email: member.Email,
+		Image: member.Image.String,
+	}
+}
+
+func databaseMembersToMembers(members []database.GetWorkspaceMembersRow) [] WorkspaceMembers{
+	var newMembers [] WorkspaceMembers
+
+	for _, member := range members{
+		newMembers = append(newMembers, databaseMemberToMember(member))
+	}
+
+	return newMembers
+}

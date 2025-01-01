@@ -73,6 +73,12 @@ func (app *application) mount() http.Handler {
 		r.Patch("/workspaces/{workspaceId}/invite-code", app.middlewareAuth(app.updateInviteCodeHandler))
 
 		r.Post("/workspaces/{workspaceId}/join", app.middlewareAuth(app.joinWorkspaceHandler))
+
+		r.Get("/workspaces/{workspaceId}/members", app.middlewareAuth(app.getWorkspaceMembersHandler))
+
+		r.Patch("/workspaces/{workspaceId}/members/{memberId}", app.middlewareAuth(app.updateWorkspaceMember))
+
+		r.Delete("/workspaces/{workspaceId}/members/{memberId}", app.middlewareAuth(app.deleteWorkspaceMember))
 	})
 
 	return r

@@ -17,3 +17,15 @@ export type WorkspaceProps = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type WorkspaceMembersProps = {
+  id: string;
+  userId: string;
+  workspaceId: string;
+  role: string;
+  email: string;
+  username: string;
+  image: string;
+  createdAt: string;
+  updatedAt: string;
+};

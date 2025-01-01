@@ -162,7 +162,7 @@ func (q *Queries) GetWorkspaceById(ctx context.Context, arg GetWorkspaceByIdPara
 }
 
 const getWorkspaces = `-- name: GetWorkspaces :many
-SELECT w.id, w.user_id, w.name, w.created_at, w.updated_at, w.image_url, w.invite_code 
+SELECT DISTINCT w.id, w.user_id, w.name, w.created_at, w.updated_at, w.image_url, w.invite_code 
 FROM workspaces w
 LEFT JOIN members m ON w.id = m.workspace_id
 WHERE w.user_id = $1 OR m.user_id = $1
