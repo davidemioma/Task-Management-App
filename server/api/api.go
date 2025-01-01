@@ -54,14 +54,17 @@ func (app *application) mount() http.Handler {
 
 		r.Get("/err", handlerErr)
 
+        // Auth
 		r.Post("/onboard", app.createUserHandler)
 
 		r.Get("/auth/user", app.middlewareAuth(app.getUserByClerkId))
 
+		// Workspaces
 		r.Get("/workspaces", app.middlewareAuth(app.getWorkspacesByUserId))
 
 		r.Post("/workspaces", app.middlewareAuth(app.createWorkspaceHandler))
 
+		// Workspace
 		r.Get("/workspaces/{workspaceId}", app.middlewareAuth(app.getWorkspaceById))
 
 		r.Get("/workspaces/{workspaceId}/single", app.middlewareAuth(app.getSigleWorkspace))
@@ -74,11 +77,17 @@ func (app *application) mount() http.Handler {
 
 		r.Post("/workspaces/{workspaceId}/join", app.middlewareAuth(app.joinWorkspaceHandler))
 
+		// Members
 		r.Get("/workspaces/{workspaceId}/members", app.middlewareAuth(app.getWorkspaceMembersHandler))
 
 		r.Patch("/workspaces/{workspaceId}/members/{memberId}", app.middlewareAuth(app.updateWorkspaceMember))
 
 		r.Delete("/workspaces/{workspaceId}/members/{memberId}", app.middlewareAuth(app.deleteWorkspaceMember))
+
+		// Projects
+		r.Get("/workspaces/{workspaceId}/projects", app.middlewareAuth(app.getWorkspaceProjects))
+
+		r.Post("/workspaces/{workspaceId}/projects", app.middlewareAuth(app.createWorkspaceProject))
 	})
 
 	return r

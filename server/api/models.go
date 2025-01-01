@@ -138,3 +138,33 @@ func databaseMembersToMembers(members []database.GetWorkspaceMembersRow) [] Work
 
 	return newMembers
 }
+
+type Project struct {
+	ID          uuid.UUID `json:"id"`
+	WorkspaceID uuid.UUID `json:"workspaceId"`
+	Name        string    `json:"name"`
+	ImageUrl    string    `json:"imageUrl"`
+	CreatedAt time.Time   `json:"createdAt"`
+	UpdatedAt time.Time   `json:"updatedAt"`
+}
+
+func projectToJson (project database.Project) Project {
+	return Project{
+		ID: project.ID,
+		WorkspaceID: project.WorkspaceID,
+		Name: project.Name,
+		ImageUrl: project.ImageUrl.String,
+		CreatedAt: project.CreatedAt,
+		UpdatedAt: project.UpdatedAt,
+	}
+}
+
+func projectsToJson (projects []database.Project) []Project {
+	var newProjects [] Project
+
+	for _, project := range projects{
+		newProjects = append(newProjects, projectToJson(project))
+	}
+
+	return newProjects
+}

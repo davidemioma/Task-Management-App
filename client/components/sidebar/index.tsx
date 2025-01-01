@@ -2,6 +2,7 @@
 
 import React from "react";
 import Logo from "../Logo";
+import Projects from "./Projects";
 import Navigations from "./Navigations";
 import { Separator } from "../ui/separator";
 import WorkspaceSwitcher from "./WorkspaceSwitcher";
@@ -18,6 +19,10 @@ const Sidebar = () => {
       <Separator className="my-4" />
 
       <Navigations />
+
+      <Separator className="my-4" />
+
+      <Projects />
     </div>
   );
 };

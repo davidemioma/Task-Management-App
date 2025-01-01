@@ -22,11 +22,12 @@ import {
 type Props = {
   children: React.ReactNode;
   trigger: React.ReactNode;
+  title?: string;
   open: boolean;
   onOpenChange: () => void;
 };
 
-const Wrapper = ({ children, trigger, open, onOpenChange }: Props) => {
+const Wrapper = ({ children, trigger, title, open, onOpenChange }: Props) => {
   const isDesktop = useMedia("(min-width: 1024px)", true);
 
   if (isDesktop) {
@@ -36,13 +37,13 @@ const Wrapper = ({ children, trigger, open, onOpenChange }: Props) => {
           <DialogTrigger>{trigger}</DialogTrigger>
         ) : (
           <DialogTrigger className={cn(buttonVariants())}>
-            Create Workspace
+            {title || "Create Workspace"}
           </DialogTrigger>
         )}
 
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create a workspace</DialogTitle>
+            <DialogTitle>{title || "Create Workspace"}</DialogTitle>
           </DialogHeader>
 
           {children}
@@ -57,13 +58,13 @@ const Wrapper = ({ children, trigger, open, onOpenChange }: Props) => {
         <DrawerTrigger>{trigger}</DrawerTrigger>
       ) : (
         <DrawerTrigger className={cn(buttonVariants())}>
-          Create Workspace
+          {title || "Create Workspace"}
         </DrawerTrigger>
       )}
 
       <DrawerContent className="p-5">
         <DrawerHeader>
-          <DrawerTitle>Create a workspace</DrawerTitle>
+          <DrawerTitle>{title || "Create Workspace"}</DrawerTitle>
         </DrawerHeader>
 
         {children}

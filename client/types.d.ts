@@ -29,3 +29,12 @@ export type WorkspaceMembersProps = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type WorkspaceProjectProps = {
+  id: string;
+  workspaceId: string;
+  name: string;
+  imageUrl: string;
+  createdAt: string;
+  updatedAt: string;
+};

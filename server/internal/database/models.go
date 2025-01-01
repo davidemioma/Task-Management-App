@@ -20,6 +20,15 @@ type Member struct {
 	UpdatedAt   time.Time
 }
 
+type Project struct {
+	ID          uuid.UUID
+	WorkspaceID uuid.UUID
+	Name        string
+	ImageUrl    sql.NullString
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
 type User struct {
 	ID        uuid.UUID
 	ClerkID   string

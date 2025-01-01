@@ -63,13 +63,13 @@ func (app *application) createWorkspaceHandler(w http.ResponseWriter, r *http.Re
 
 		key := "uploads/" + uniqueID + fileExtension
 
-		// Generate a pre-signed URL for S3 upload
+		// Upload to S3 and create a URL with cloudfront
 		s3Err := UploadToS3(app.storage.bucket, key, file)
 
 		if s3Err != nil {
-			fmt.Printf("Could not generate presigned URL: %v", s3Err)
+			fmt.Printf("Could not upload to s3: %v", s3Err)
 
-			respondWithError(w, http.StatusInternalServerError, "Could not generate presigned URL")
+			respondWithError(w, http.StatusInternalServerError, "Could not upload to s3")
 
 			return
 		}
