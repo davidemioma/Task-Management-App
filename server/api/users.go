@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"server/internal/database"
 	"time"
@@ -27,7 +26,7 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 	err := decoder.Decode(&params)
 
 	if err != nil {
-		fmt.Printf("Error parsing JSON: %v", err)
+		app.logger.Printf("Error parsing JSON: %v", err)
 		
 		respondWithError(w, http.StatusBadRequest, "Error parsing JSON")
 
@@ -61,7 +60,7 @@ func (app *application) createUserHandler(w http.ResponseWriter, r *http.Request
 	})
 
 	if dbErr != nil {
-		fmt.Printf("Couldn't create user: %v", dbErr)
+		app.logger.Printf("Couldn't create user: %v", dbErr)
 
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create user")
 

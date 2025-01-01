@@ -146,7 +146,7 @@ const EditWorkspace = ({ data, onClose }: Props) => {
                           variant="destructive"
                           disabled={isPending}
                           onClick={() => {
-                            field.onChange(null);
+                            field.onChange("");
 
                             if (inputRef.current) {
                               inputRef.current.value = "";

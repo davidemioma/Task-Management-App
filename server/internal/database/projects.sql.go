@@ -39,6 +39,43 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) er
 	return err
 }
 
+const deleteProject = `-- name: DeleteProject :exec
+DELETE FROM projects WHERE id = $1 AND workspace_id = $2
+`
+
+type DeleteProjectParams struct {
+	ID          uuid.UUID
+	WorkspaceID uuid.UUID
+}
+
+func (q *Queries) DeleteProject(ctx context.Context, arg DeleteProjectParams) error {
+	_, err := q.db.ExecContext(ctx, deleteProject, arg.ID, arg.WorkspaceID)
+	return err
+}
+
+const getProjectById = `-- name: GetProjectById :one
+SELECT id, workspace_id, name, image_url, created_at, updated_at FROM projects WHERE workspace_id = $1 AND id = $2
+`
+
+type GetProjectByIdParams struct {
+	WorkspaceID uuid.UUID
+	ID          uuid.UUID
+}
+
+func (q *Queries) GetProjectById(ctx context.Context, arg GetProjectByIdParams) (Project, error) {
+	row := q.db.QueryRowContext(ctx, getProjectById, arg.WorkspaceID, arg.ID)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.Name,
+		&i.ImageUrl,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getProjects = `-- name: GetProjects :many
 SELECT id, workspace_id, name, image_url, created_at, updated_at FROM projects WHERE workspace_id = $1 ORDER BY created_at DESC
 `
@@ -71,4 +108,30 @@ func (q *Queries) GetProjects(ctx context.Context, workspaceID uuid.UUID) ([]Pro
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateProject = `-- name: UpdateProject :exec
+UPDATE projects
+SET 
+    name = $1,
+    image_url = $2,
+    updated_at = NOW()
+WHERE id = $3 AND workspace_id = $4
+`
+
+type UpdateProjectParams struct {
+	Name        string
+	ImageUrl    sql.NullString
+	ID          uuid.UUID
+	WorkspaceID uuid.UUID
+}
+
+func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) error {
+	_, err := q.db.ExecContext(ctx, updateProject,
+		arg.Name,
+		arg.ImageUrl,
+		arg.ID,
+		arg.WorkspaceID,
+	)
+	return err
 }

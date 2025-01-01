@@ -16,7 +16,7 @@ export default function DashboardLayout({
         <div className="flex-1 lg:pl-[264px] max-w-screen-2xl mx-auto">
           <Navbar />
 
-          <div>{children}</div>
+          <div className="p-5">{children}</div>
         </div>
       </div>
     </div>

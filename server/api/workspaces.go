@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"server/internal/database"
 	"time"
@@ -17,7 +16,7 @@ func (app *application) createWorkspaceHandler(w http.ResponseWriter, r *http.Re
     err := r.ParseMultipartForm(10 << 20)
 
     if err != nil {
-		fmt.Printf("Unable to parse form: %v", err)
+		app.logger.Printf("Unable to parse form: %v", err)
 
 		respondWithError(w, http.StatusBadRequest, "Unable to parse form")
       
@@ -28,7 +27,7 @@ func (app *application) createWorkspaceHandler(w http.ResponseWriter, r *http.Re
     name := r.FormValue("name")
 
     if name == "" {
-		fmt.Printf("Name is required")
+		app.logger.Printf("Name is required")
 
 		respondWithError(w, http.StatusBadRequest, "Name is required")
         
@@ -49,7 +48,7 @@ func (app *application) createWorkspaceHandler(w http.ResponseWriter, r *http.Re
 		valid := isValidContentType(contentType)
 
 		if !valid {
-			fmt.Printf("Invalid image type")
+			app.logger.Printf("Invalid image type")
 
 			respondWithError(w, http.StatusBadRequest, "Invalid image type")
 
@@ -67,7 +66,7 @@ func (app *application) createWorkspaceHandler(w http.ResponseWriter, r *http.Re
 		s3Err := UploadToS3(app.storage.bucket, key, file)
 
 		if s3Err != nil {
-			fmt.Printf("Could not upload to s3: %v", s3Err)
+			app.logger.Printf("Could not upload to s3: %v", s3Err)
 
 			respondWithError(w, http.StatusInternalServerError, "Could not upload to s3")
 
@@ -94,7 +93,7 @@ func (app *application) createWorkspaceHandler(w http.ResponseWriter, r *http.Re
 	})
 
 	if dbErr != nil {
-		fmt.Printf("Couldn't create workspace: %v", dbErr)
+		app.logger.Printf("Couldn't create workspace: %v", dbErr)
 
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create workspace")
 
@@ -105,7 +104,7 @@ func (app *application) createWorkspaceHandler(w http.ResponseWriter, r *http.Re
 	memberErr := app.createMemberHandler(r.Context(), id, user.ID, "ADMIN")
 
 	if memberErr != nil {
-		fmt.Printf("Couldn't create member: %v", memberErr)
+		app.logger.Printf("Couldn't create member: %v", memberErr)
 
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create member")
 
@@ -121,7 +120,7 @@ func (app *application) getWorkspacesByUserId(w http.ResponseWriter, r *http.Req
 	workspaces, err := app.storage.DB.GetWorkspaces(r.Context(), user.ID)
 
 	if err != nil {
-		fmt.Printf("Couldn't get workspaces: %v", err)
+		app.logger.Printf("Couldn't get workspaces: %v", err)
 
 		respondWithError(w, http.StatusNotFound, "Couldn't get workspaces")
 
@@ -136,7 +135,7 @@ func (app *application) updateWorkspaceHandler(w http.ResponseWriter, r *http.Re
     workspace_id := chi.URLParam(r, "workspaceId")
 
     if workspace_id == "" {
-		fmt.Printf("Workspace ID is required")
+		app.logger.Printf("Workspace ID is required")
 
 		respondWithError(w, http.StatusBadRequest, "Workspace ID required")
         
@@ -158,7 +157,7 @@ func (app *application) updateWorkspaceHandler(w http.ResponseWriter, r *http.Re
 	})
 
 	if checkErr != nil {
-		fmt.Printf("Couldn't find workspace: %v", checkErr)
+		app.logger.Printf("Couldn't find workspace: %v", checkErr)
 
 		respondWithError(w, http.StatusNotFound, "Couldn't find workspace")
 
@@ -166,7 +165,7 @@ func (app *application) updateWorkspaceHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	if workspace.Role != "ADMIN" {
-		fmt.Printf("User is not an admin")
+		app.logger.Printf("User is not an admin")
 
 		respondWithError(w, http.StatusUnauthorized, "You are not authorized to perform this task!")
 
@@ -177,7 +176,7 @@ func (app *application) updateWorkspaceHandler(w http.ResponseWriter, r *http.Re
     err := r.ParseMultipartForm(10 << 20)
 
     if err != nil {
-		fmt.Printf("Unable to parse form: %v", err)
+		app.logger.Printf("Unable to parse form: %v", err)
 
 		respondWithError(w, http.StatusBadRequest, "Unable to parse form")
       
@@ -188,7 +187,7 @@ func (app *application) updateWorkspaceHandler(w http.ResponseWriter, r *http.Re
     name := r.FormValue("name")
 
     if name == "" {
-		fmt.Printf("Name is required")
+		app.logger.Printf("Name is required")
 
 		respondWithError(w, http.StatusBadRequest, "Name is required")
         
@@ -213,7 +212,7 @@ func (app *application) updateWorkspaceHandler(w http.ResponseWriter, r *http.Re
 		valid := isValidContentType(contentType)
 
 		if !valid {
-			fmt.Printf("Invalid image type")
+			app.logger.Printf("Invalid image type")
 
 			respondWithError(w, http.StatusBadRequest, "Invalid image type")
 
@@ -227,7 +226,7 @@ func (app *application) updateWorkspaceHandler(w http.ResponseWriter, r *http.Re
 			s3DelErr := DeleteObjectFromS3(app.storage.bucket, s3Key)
 
 			if s3DelErr != nil {
-				fmt.Printf("Could not delete object: %v", s3DelErr)
+				app.logger.Printf("Could not delete object: %v", s3DelErr)
 
 				respondWithError(w, http.StatusInternalServerError, "Could not delete object")
 
@@ -246,9 +245,9 @@ func (app *application) updateWorkspaceHandler(w http.ResponseWriter, r *http.Re
 		s3Err := UploadToS3(app.storage.bucket, key, file)
 
 		if s3Err != nil {
-			fmt.Printf("Could not generate presigned URL: %v", s3Err)
+			app.logger.Printf("Could not Could not upload to s3: %v", s3Err)
 
-			respondWithError(w, http.StatusInternalServerError, "Could not generate presigned URL")
+			respondWithError(w, http.StatusInternalServerError, "Could not Could not upload to s3")
 
 			return
 		}
@@ -256,6 +255,21 @@ func (app *application) updateWorkspaceHandler(w http.ResponseWriter, r *http.Re
 		imageUrl = app.storage.cloudfront_url + "/" + key + "#t=1"
 	} else {
 		imageUrl = ""
+
+		// Delete previous File from s3
+		if workspace.ImageUrl.Valid {
+			s3Key := extractKeyFromImageUrl(workspace.ImageUrl.String)
+
+			s3DelErr := DeleteObjectFromS3(app.storage.bucket, s3Key)
+
+			if s3DelErr != nil {
+				app.logger.Printf("Could not delete object: %v", s3DelErr)
+
+				respondWithError(w, http.StatusInternalServerError, "Could not delete object")
+
+				return
+			}
+		}
 	}
 
 	// Update Workspace
@@ -267,7 +281,7 @@ func (app *application) updateWorkspaceHandler(w http.ResponseWriter, r *http.Re
 	})
 
 	if dbErr != nil {
-		fmt.Printf("Couldn't update workspace: %v", dbErr)
+		app.logger.Printf("Couldn't update workspace: %v", dbErr)
 
 		respondWithError(w, http.StatusInternalServerError, "Couldn't update workspace")
 
@@ -282,7 +296,7 @@ func (app *application) getWorkspaceById(w http.ResponseWriter, r *http.Request,
     workspaceId := chi.URLParam(r, "workspaceId")
 
     if workspaceId == "" {
-		fmt.Printf("Workspace ID is required")
+		app.logger.Printf("Workspace ID is required")
 
 		respondWithError(w, http.StatusBadRequest, "Workspace ID required")
         
@@ -303,7 +317,7 @@ func (app *application) getWorkspaceById(w http.ResponseWriter, r *http.Request,
 	})
 
 	if err != nil {
-		fmt.Printf("Couldn't get workspace: %v", err)
+		app.logger.Printf("Couldn't get workspace: %v", err)
 
 		respondWithError(w, http.StatusNotFound, "Couldn't get workspace")
 
@@ -318,7 +332,7 @@ func (app *application) deleteWorkspaceHandler(w http.ResponseWriter, r *http.Re
     workspaceId := chi.URLParam(r, "workspaceId")
 
     if workspaceId == "" {
-		fmt.Printf("Workspace ID is required")
+		app.logger.Printf("Workspace ID is required")
 
 		respondWithError(w, http.StatusBadRequest, "Workspace ID required")
         
@@ -340,7 +354,7 @@ func (app *application) deleteWorkspaceHandler(w http.ResponseWriter, r *http.Re
 	})
 
 	if checkErr != nil {
-		fmt.Printf("Couldn't find workspace: %v", checkErr)
+		app.logger.Printf("Couldn't find workspace: %v", checkErr)
 
 		respondWithError(w, http.StatusNotFound, "Couldn't find workspace")
 
@@ -348,7 +362,7 @@ func (app *application) deleteWorkspaceHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	if workspace.Role != "ADMIN" {
-		fmt.Printf("User is not an admin")
+		app.logger.Printf("User is not an admin")
 
 		respondWithError(w, http.StatusUnauthorized, "You are not authorized to perform this task!")
 
@@ -362,7 +376,7 @@ func (app *application) deleteWorkspaceHandler(w http.ResponseWriter, r *http.Re
 		s3DelErr := DeleteObjectFromS3(app.storage.bucket, s3Key)
 
 		if s3DelErr != nil {
-			fmt.Printf("Could not delete object: %v", s3DelErr)
+			app.logger.Printf("Could not delete object: %v", s3DelErr)
 
 			respondWithError(w, http.StatusInternalServerError, "Could not delete object")
 
@@ -377,7 +391,7 @@ func (app *application) deleteWorkspaceHandler(w http.ResponseWriter, r *http.Re
 	})
 
 	if dbErr != nil {
-		fmt.Printf("Couldn't delete workspace: %v", dbErr)
+		app.logger.Printf("Couldn't delete workspace: %v", dbErr)
 
 		respondWithError(w, http.StatusInternalServerError, "Couldn't delete workspace")
 
@@ -392,7 +406,7 @@ func (app *application) updateInviteCodeHandler(w http.ResponseWriter, r *http.R
     workspaceId := chi.URLParam(r, "workspaceId")
 
     if workspaceId == "" {
-		fmt.Printf("Workspace ID is required")
+		app.logger.Printf("Workspace ID is required")
 
 		respondWithError(w, http.StatusBadRequest, "Workspace ID required")
         
@@ -414,7 +428,7 @@ func (app *application) updateInviteCodeHandler(w http.ResponseWriter, r *http.R
 	})
 
 	if checkErr != nil {
-		fmt.Printf("Couldn't find workspace: %v", checkErr)
+		app.logger.Printf("Couldn't find workspace: %v", checkErr)
 
 		respondWithError(w, http.StatusNotFound, "Couldn't find workspace")
 
@@ -422,7 +436,7 @@ func (app *application) updateInviteCodeHandler(w http.ResponseWriter, r *http.R
 	}
 
 	if workspace.Role != "ADMIN" {
-		fmt.Printf("User is not an admin")
+		app.logger.Printf("User is not an admin")
 
 		respondWithError(w, http.StatusUnauthorized, "You are not authorized to perform this task!")
 
@@ -436,7 +450,7 @@ func (app *application) updateInviteCodeHandler(w http.ResponseWriter, r *http.R
 	})
 
 	if dbErr != nil {
-		fmt.Printf("Couldn't update workspace invite code: %v", dbErr)
+		app.logger.Printf("Couldn't update workspace invite code: %v", dbErr)
 
 		respondWithError(w, http.StatusInternalServerError, "Couldn't update workspace invite code")
 
@@ -460,7 +474,7 @@ func (app *application) joinWorkspaceHandler(w http.ResponseWriter, r *http.Requ
 	err := decoder.Decode(&params)
 
 	if err != nil {
-		fmt.Printf("Error parsing JSON: %v", err)
+		app.logger.Printf("Error parsing JSON: %v", err)
 		
 		respondWithError(w, http.StatusBadRequest, "Error parsing JSON")
 
@@ -477,7 +491,7 @@ func (app *application) joinWorkspaceHandler(w http.ResponseWriter, r *http.Requ
     workspaceId := chi.URLParam(r, "workspaceId")
 
     if workspaceId == "" {
-		fmt.Printf("Workspace ID is required")
+		app.logger.Printf("Workspace ID is required")
 
 		respondWithError(w, http.StatusBadRequest, "Workspace ID required")
         
@@ -496,7 +510,7 @@ func (app *application) joinWorkspaceHandler(w http.ResponseWriter, r *http.Requ
 	workspace, checkErr := app.storage.DB.GetSigleWorkspace(r.Context(), validId)
 
 	if checkErr != nil {
-		fmt.Printf("Couldn't find workspace: %v", checkErr)
+		app.logger.Printf("Couldn't find workspace: %v", checkErr)
 
 		respondWithError(w, http.StatusNotFound, "Couldn't find workspace")
 
@@ -523,7 +537,7 @@ func (app *application) joinWorkspaceHandler(w http.ResponseWriter, r *http.Requ
 	memberErr := app.createMemberHandler(r.Context(), workspace.ID, user.ID, "MEMBER")
 
 	if memberErr != nil {
-		fmt.Printf("Couldn't create member: %v", memberErr)
+		app.logger.Printf("Couldn't create member: %v", memberErr)
 
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create member")
 
@@ -538,7 +552,7 @@ func (app *application) getSigleWorkspace(w http.ResponseWriter, r *http.Request
     workspaceId := chi.URLParam(r, "workspaceId")
 
     if workspaceId == "" {
-		fmt.Printf("Workspace ID is required")
+		app.logger.Printf("Workspace ID is required")
 
 		respondWithError(w, http.StatusBadRequest, "Workspace ID required")
         
@@ -556,7 +570,7 @@ func (app *application) getSigleWorkspace(w http.ResponseWriter, r *http.Request
 	workspace, err := app.storage.DB.GetSigleWorkspace(r.Context(), validId)
 
 	if err != nil {
-		fmt.Printf("Couldn't get workspace: %v", err)
+		app.logger.Printf("Couldn't get workspace: %v", err)
 
 		respondWithError(w, http.StatusNotFound, "Couldn't get workspace")
 

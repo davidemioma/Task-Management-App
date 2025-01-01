@@ -2,15 +2,14 @@
 
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Skeleton } from "../ui/skeleton";
+import ProjectAvatar from "../ProjectAvatar";
 import { WorkspaceProjectProps } from "@/types";
 import { RiAddCircleFill } from "react-icons/ri";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, usePathname } from "next/navigation";
 import { getWorkspaceProjects } from "@/lib/data/projects";
 import { cn, getWorkspaceProjectsQueryId } from "@/lib/utils";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import CreateProjectModal from "../forms/project/CreateProjectModal";
 
 const Projects = () => {
@@ -89,22 +88,10 @@ const Projects = () => {
                         "bg-white text-primary shadow-sm hover:opacity-100"
                     )}
                   >
-                    {project.imageUrl ? (
-                      <div className="size-10 relative rounded-md overflow-hidden">
-                        <Image
-                          className="object-cover"
-                          src={project.imageUrl}
-                          fill
-                          alt="workspace-logo"
-                        />
-                      </div>
-                    ) : (
-                      <Avatar className="size-10 rounded-md">
-                        <AvatarFallback className="bg-blue-600 text-white font-semibold uppercase text-lg rounded-md">
-                          {project.name[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
+                    <ProjectAvatar
+                      imageUrl={project.imageUrl}
+                      fallback={project.name[0]}
+                    />
 
                     <span className="truncate">{project.name}</span>
                   </div>

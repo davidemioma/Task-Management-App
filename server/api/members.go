@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"server/internal/database"
 	"time"
@@ -47,7 +46,7 @@ func (app *application) getWorkspaceMembersHandler(w http.ResponseWriter, r *htt
     workspaceId := chi.URLParam(r, "workspaceId")
 
     if workspaceId == "" {
-		fmt.Printf("Workspace ID is required")
+		app.logger.Printf("Workspace ID is required")
 
 		respondWithError(w, http.StatusBadRequest, "Workspace ID required")
         
@@ -69,7 +68,7 @@ func (app *application) getWorkspaceMembersHandler(w http.ResponseWriter, r *htt
 	})
 
 	if checkErr != nil {
-		fmt.Printf("Couldn't find workspace: %v", checkErr)
+		app.logger.Printf("Couldn't find workspace: %v", checkErr)
 
 		respondWithError(w, http.StatusNotFound, "Couldn't find workspace")
 
@@ -79,7 +78,7 @@ func (app *application) getWorkspaceMembersHandler(w http.ResponseWriter, r *htt
 	members, err := app.storage.DB.GetWorkspaceMembers(r.Context(), workspace.ID)
 
 	if err != nil {
-		fmt.Printf("Couldn't get members: %v", err)
+		app.logger.Printf("Couldn't get members: %v", err)
 
 		respondWithError(w, http.StatusInternalServerError, "Couldn't get members")
 
@@ -180,7 +179,7 @@ func (app *application) updateWorkspaceMember(w http.ResponseWriter, r *http.Req
 	err := decoder.Decode(&params)
 
 	if err != nil {
-		fmt.Printf("Error parsing JSON: %v", err)
+		app.logger.Printf("Error parsing JSON: %v", err)
 		
 		respondWithError(w, http.StatusBadRequest, "Error parsing JSON")
 

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"server/internal/auth"
 	"server/internal/database"
@@ -14,7 +13,7 @@ func (app *application) middlewareAuth(handler AuthHandler) http.HandlerFunc {
 		clerk_id, err := auth.GetClerkId(r.Header)
 
 		if err != nil {
-		    fmt.Printf("Couldn't get clerk id: %v", err)
+		    app.logger.Printf("Couldn't get clerk id: %v", err)
 
 		    respondWithError(w, http.StatusNotFound, "Couldn't get clerk id")
 
@@ -24,7 +23,7 @@ func (app *application) middlewareAuth(handler AuthHandler) http.HandlerFunc {
 		user, dbErr := app.storage.DB.GetUserByClerkId(r.Context(), clerk_id)
 
 	    if dbErr != nil {
-		    fmt.Printf("Couldn't get user: %v", err)
+		    app.logger.Printf("Couldn't get user: %v", err)
 
 		    respondWithError(w, http.StatusUnauthorized, "Couldn't get user")
 

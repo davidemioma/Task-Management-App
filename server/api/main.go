@@ -50,6 +50,9 @@ func main() {
 		log.Fatal("Can't connect to database:", err)
 	}
 
+	// Create a logger
+	logger := log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
+
 	cfg := config{}
 
 	storage := storage{
@@ -61,6 +64,7 @@ func main() {
 	app := application{
 		config: cfg,
 		storage: storage,
+		logger: logger,
 	}
 
 	r:= app.mount()

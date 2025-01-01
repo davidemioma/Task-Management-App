@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { cn } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
 import ErrorPage from "@/components/ErrorPage";
@@ -6,6 +7,7 @@ import { getCurrentUser } from "@/lib/data/auth";
 import { notFound, redirect } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { getWorkspaceById } from "@/lib/data/workspaces";
+import LoadingScreen from "@/components/LoadingScreen";
 import EditWorkspace from "@/components/forms/workspace/EditWorkspace";
 import DeleteWorkspace from "@/components/forms/workspace/DeleteWorkspace";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,58 +47,67 @@ export default async function WorkspaceSettingsPage({
   }
 
   return (
-    <div className="min-h-[calc(100vh-160px)] w-full flex items-center justify-center">
-      <div className="space-y-4">
-        <Card className="w-full max-w-xl">
-          <CardHeader className="flex flex-col gap-4">
-            <Link
-              href={`/workspaces/${workspace.id}`}
-              className={cn("w-fit", buttonVariants({ variant: "secondary" }))}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </Link>
+    <Suspense
+      fallback={
+        <LoadingScreen className="bg-transparent h-[calc(100vh-105px)]" />
+      }
+    >
+      <div className="min-h-[calc(100vh-160px)] w-full flex items-center justify-center">
+        <div className="space-y-4">
+          <Card className="w-full max-w-xl">
+            <CardHeader className="flex flex-col gap-4">
+              <Link
+                href={`/workspaces/${workspace.id}`}
+                className={cn(
+                  "w-fit",
+                  buttonVariants({ variant: "secondary" })
+                )}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </Link>
 
-            <CardTitle>Edit {workspace.name}</CardTitle>
-          </CardHeader>
+              <CardTitle>Edit {workspace.name}</CardTitle>
+            </CardHeader>
 
-          <CardContent>
-            <EditWorkspace data={workspace} />
-          </CardContent>
-        </Card>
+            <CardContent>
+              <EditWorkspace data={workspace} />
+            </CardContent>
+          </Card>
 
-        <Card className="w-full max-w-xl">
-          <CardContent className="pt-7">
-            <div className="flex flex-col mb-4">
-              <h3 className="font-bold">Invite Members</h3>
+          <Card className="w-full max-w-xl">
+            <CardContent className="pt-7">
+              <div className="flex flex-col mb-4">
+                <h3 className="font-bold">Invite Members</h3>
 
-              <p className="text-sm text-muted-foreground">
-                Use the invite link to add members to your workspace.
-              </p>
-            </div>
+                <p className="text-sm text-muted-foreground">
+                  Use the invite link to add members to your workspace.
+                </p>
+              </div>
 
-            <WorkspaceInvite
-              workspaceId={workspace.id}
-              initialCode={workspace.inviteCode}
-            />
-          </CardContent>
-        </Card>
+              <WorkspaceInvite
+                workspaceId={workspace.id}
+                initialCode={workspace.inviteCode}
+              />
+            </CardContent>
+          </Card>
 
-        <Card className="w-full max-w-xl">
-          <CardContent className="pt-7">
-            <div className="flex flex-col mb-4">
-              <h3 className="font-bold">Danger Zone</h3>
+          <Card className="w-full max-w-xl">
+            <CardContent className="pt-7">
+              <div className="flex flex-col mb-4">
+                <h3 className="font-bold">Danger Zone</h3>
 
-              <p className="text-sm text-muted-foreground">
-                Deleting a workspace is irreversible and will remove all
-                associated data.
-              </p>
-            </div>
+                <p className="text-sm text-muted-foreground">
+                  Deleting a workspace is irreversible and will remove all
+                  associated data.
+                </p>
+              </div>
 
-            <DeleteWorkspace workspaceId={workspace.id} />
-          </CardContent>
-        </Card>
+              <DeleteWorkspace workspaceId={workspace.id} />
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </Suspense>
   );
 }

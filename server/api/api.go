@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"server/internal/database"
 	"time"
@@ -21,6 +22,7 @@ type storage struct {
 type application struct {
 	config  config
 	storage storage
+	logger  *log.Logger
 }
 
 // Handle Routes
@@ -88,6 +90,12 @@ func (app *application) mount() http.Handler {
 		r.Get("/workspaces/{workspaceId}/projects", app.middlewareAuth(app.getWorkspaceProjects))
 
 		r.Post("/workspaces/{workspaceId}/projects", app.middlewareAuth(app.createWorkspaceProject))
+
+		r.Get("/workspaces/{workspaceId}/projects/{projectId}", app.middlewareAuth(app.getProjectById))
+
+		r.Patch("/workspaces/{workspaceId}/projects/{projectId}", app.middlewareAuth(app.updateProjectHandler))
+
+		r.Delete("/workspaces/{workspaceId}/projects/{projectId}", app.middlewareAuth(app.deleteProjectHandler))
 	})
 
 	return r

@@ -1,8 +1,10 @@
+import { Suspense } from "react";
 import ErrorPage from "@/components/ErrorPage";
 import { getCurrentUser } from "@/lib/data/auth";
 import { notFound, redirect } from "next/navigation";
 import { getWorkspace } from "@/lib/data/workspaces";
 import JoinWorkspace from "./_components/JoinWorkspace";
+import LoadingScreen from "@/components/LoadingScreen";
 
 export default async function Join({
   params,
@@ -44,12 +46,18 @@ export default async function Join({
   }
 
   return (
-    <div className="min-h-[calc(100vh-160px)] w-full flex items-center justify-center">
-      <JoinWorkspace
-        workspaceId={workspace.id}
-        code={code || ""}
-        name={workspace.name}
-      />
-    </div>
+    <Suspense
+      fallback={
+        <LoadingScreen className="h-[calc(100vh-160px)] bg-transparent" />
+      }
+    >
+      <div className="min-h-[calc(100vh-160px)] w-full flex items-center justify-center">
+        <JoinWorkspace
+          workspaceId={workspace.id}
+          code={code || ""}
+          name={workspace.name}
+        />
+      </div>
+    </Suspense>
   );
 }

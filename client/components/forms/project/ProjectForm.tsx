@@ -8,8 +8,9 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { WorkspaceProjectProps } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createProject } from "@/lib/actions/projects";
+import { createProject, updateProject } from "@/lib/actions/projects";
 import { getWorkspaceProjectsQueryId } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -26,9 +27,10 @@ import {
 type Props = {
   onClose?: () => void;
   workspaceId: string;
+  initialData?: WorkspaceProjectProps;
 };
 
-const ProjectForm = ({ onClose, workspaceId }: Props) => {
+const ProjectForm = ({ onClose, workspaceId, initialData }: Props) => {
   const router = useRouter();
 
   const queryClient = useQueryClient();
@@ -38,8 +40,8 @@ const ProjectForm = ({ onClose, workspaceId }: Props) => {
   const form = useForm<ProjectValidator>({
     resolver: zodResolver(ProjectSchema),
     defaultValues: {
-      name: "",
-      image: undefined,
+      name: initialData?.name || "",
+      image: initialData?.imageUrl || "",
     },
   });
 
@@ -89,8 +91,49 @@ const ProjectForm = ({ onClose, workspaceId }: Props) => {
     },
   });
 
+  const { mutate: updateProjectHandler, isPending: isUpdating } = useMutation({
+    mutationKey: ["update-workspace-project", initialData?.id],
+    mutationFn: async (values: ProjectValidator) => {
+      const formData = new FormData();
+
+      formData.append("name", values.name);
+
+      if (values.image) {
+        formData.append("image", values.image);
+      }
+
+      const result = await updateProject({
+        workspaceId: initialData?.workspaceId as string,
+        projectId: initialData?.id as string,
+        values: formData,
+      });
+
+      return result;
+    },
+    onSuccess: (res) => {
+      if (res.status !== 200) {
+        toast.error("Something went wrong! could not update project.");
+      }
+
+      queryClient.invalidateQueries({
+        queryKey: [getWorkspaceProjectsQueryId],
+      });
+
+      toast.success("Project Updated");
+
+      onClose?.();
+    },
+    onError: (err) => {
+      toast.error("Something went wrong! " + err.message);
+    },
+  });
+
   const onSubmit = (values: ProjectValidator) => {
-    mutate(values);
+    if (initialData) {
+      updateProjectHandler(values);
+    } else {
+      mutate(values);
+    }
   };
 
   return (
@@ -130,7 +173,7 @@ const ProjectForm = ({ onClose, workspaceId }: Props) => {
                       ref={inputRef}
                       className="hidden"
                       accept=".jpeg, .jpg, .png, .svg, .webp"
-                      disabled={isPending}
+                      disabled={isPending || isUpdating}
                       onChange={handleFileChange}
                     />
 
@@ -147,9 +190,9 @@ const ProjectForm = ({ onClose, workspaceId }: Props) => {
                           className="w-fit flex-grow-0 mt-2"
                           size="xs"
                           variant="destructive"
-                          disabled={isPending}
+                          disabled={isPending || isUpdating}
                           onClick={() => {
-                            field.onChange(null);
+                            field.onChange("");
 
                             if (inputRef.current) {
                               inputRef.current.value = "";
@@ -164,7 +207,7 @@ const ProjectForm = ({ onClose, workspaceId }: Props) => {
                           className="w-fit flex-grow-0 mt-2"
                           size="xs"
                           variant="teritary"
-                          disabled={isPending}
+                          disabled={isPending || isUpdating}
                           onClick={() => {
                             inputRef?.current?.click();
                           }}
@@ -190,7 +233,7 @@ const ProjectForm = ({ onClose, workspaceId }: Props) => {
                   <Input
                     placeholder="Name..."
                     {...field}
-                    disabled={isPending}
+                    disabled={isPending || isUpdating}
                   />
                 </FormControl>
 
@@ -200,8 +243,8 @@ const ProjectForm = ({ onClose, workspaceId }: Props) => {
           />
         </div>
 
-        <Button type="submit" disabled={isPending}>
-          Create
+        <Button type="submit" disabled={isPending || isUpdating}>
+          {initialData ? "Save" : "Create"}
         </Button>
       </form>
     </Form>

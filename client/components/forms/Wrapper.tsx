@@ -25,9 +25,17 @@ type Props = {
   title?: string;
   open: boolean;
   onOpenChange: () => void;
+  className?: string;
 };
 
-const Wrapper = ({ children, trigger, title, open, onOpenChange }: Props) => {
+const Wrapper = ({
+  children,
+  className,
+  trigger,
+  title,
+  open,
+  onOpenChange,
+}: Props) => {
   const isDesktop = useMedia("(min-width: 1024px)", true);
 
   if (isDesktop) {
@@ -41,7 +49,7 @@ const Wrapper = ({ children, trigger, title, open, onOpenChange }: Props) => {
           </DialogTrigger>
         )}
 
-        <DialogContent>
+        <DialogContent className={cn(className)}>
           <DialogHeader>
             <DialogTitle>{title || "Create Workspace"}</DialogTitle>
           </DialogHeader>
