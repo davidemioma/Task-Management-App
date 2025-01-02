@@ -1,6 +1,9 @@
 package main
 
-import "strings"
+import (
+	"strings"
+	"time"
+)
 
 func getFileExtension(contentType string) string {
     switch contentType {
@@ -46,4 +49,16 @@ func extractKeyFromImageUrl(imageUrl string) string {
 
 	// Return the key
 	return "uploads/" + key
+}
+
+func parseDueDate(dueDateStr string) (time.Time, error) {
+	layout := time.RFC3339
+
+	parsedTime, err := time.Parse(layout, dueDateStr)
+
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return parsedTime, nil
 }

@@ -1,3 +1,5 @@
+import { TaskStatus } from "./lib/validators/task";
+
 export type UserProps = {
   id: string;
   clerkId: string;
@@ -37,4 +39,43 @@ export type WorkspaceProjectProps = {
   imageUrl: string;
   createdAt: string;
   updatedAt: string;
+};
+
+export type WorkspaceTaskProps = {
+  id: string;
+  workspaceId: string;
+  projectId: string;
+  assigneeId: string;
+  name: string;
+  description: string;
+  position: number;
+  dueDate: Date;
+  status: TaskStatus;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    username: string;
+    image: string;
+  };
+  project: {
+    name: string;
+    imageUrl: string;
+  };
+};
+
+export type OptionsProps = {
+  projects: {
+    id: string;
+    name: string;
+    imageUrl: string;
+  }[];
+  members: {
+    id: string;
+    role: string;
+    user: {
+      id: string;
+      username: string;
+      image: string;
+    };
+  }[];
 };

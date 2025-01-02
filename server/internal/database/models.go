@@ -29,6 +29,20 @@ type Project struct {
 	UpdatedAt   time.Time
 }
 
+type Task struct {
+	ID          uuid.UUID
+	WorkspaceID uuid.UUID
+	ProjectID   uuid.UUID
+	AssigneeID  uuid.UUID
+	Name        string
+	Description sql.NullString
+	Position    int32
+	DueDate     time.Time
+	Status      string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
 type User struct {
 	ID        uuid.UUID
 	ClerkID   string

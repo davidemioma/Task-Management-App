@@ -168,3 +168,84 @@ func projectsToJson (projects []database.Project) []Project {
 
 	return newProjects
 }
+
+type TaskUser struct {
+	Username string `json:"username"`
+	Image    string `json:"image"`
+}
+
+type TaskProject struct {
+	Name     string `json:"name"`
+	ImageUrl string `json:"imageUrl"`
+}
+
+type JsonTask struct {
+	ID          uuid.UUID    `json:"id"`
+	WorkspaceID uuid.UUID    `json:"workspaceId"`
+	ProjectID   uuid.UUID    `json:"projectId"`
+	AssigneeID  uuid.UUID    `json:"assigneeId"`
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	Position    int32        `json:"position"`
+	DueDate     time.Time    `json:"dueDate"`
+	Status      string       `json:"status"`
+	CreatedAt   time.Time    `json:"createdAt"`
+	UpdatedAt   time.Time    `json:"updatedAt"`
+	User        TaskUser     `json:"user"`
+	Project     TaskProject  `json:"project"`
+}
+
+type OptionUser struct {
+	ID       uuid.UUID  `json:"id"`
+	Username string     `json:"username"`
+	Image    string     `json:"image"`
+}
+
+type OptionProject struct {
+	ID       uuid.UUID `json:"id"`
+	Name     string    `json:"name"`
+	ImageUrl string    `json:"imageUrl"`
+}
+
+type OptionMember struct {
+	ID       uuid.UUID  `json:"id"`
+	Role     string     `json:"role"`
+	User     OptionUser `json:"user"`
+}
+
+type JsonOptions struct {
+	Projects []OptionProject `json:"projects"`
+	Members  []OptionMember  `json:"members"`
+}
+
+func projectsToJsonProjects(projects []database.GetTaskProjectsRow) []OptionProject {
+	var newProjects [] OptionProject
+
+	for _, project := range projects{
+		newProjects = append(newProjects, OptionProject{
+			ID: project.ID,
+			Name: project.Name,
+			ImageUrl: project.ImageUrl.String,
+		})
+	}
+
+	return newProjects
+}
+
+func membersToJsonMembers(members []database.GetTaskMembersRow) []OptionMember {
+	var newMembers [] OptionMember
+
+	for _, member := range members{
+		newMembers = append(newMembers, OptionMember{
+			ID: member.ID,
+			Role: member.Role,
+			User: OptionUser{
+				ID: member.UserID.UUID,
+				Username: member.UserUsername.String,
+				Image: member.UserImage.String,
+			},
+		})
+	}
+
+	return newMembers
+}

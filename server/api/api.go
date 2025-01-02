@@ -96,6 +96,13 @@ func (app *application) mount() http.Handler {
 		r.Patch("/workspaces/{workspaceId}/projects/{projectId}", app.middlewareAuth(app.updateProjectHandler))
 
 		r.Delete("/workspaces/{workspaceId}/projects/{projectId}", app.middlewareAuth(app.deleteProjectHandler))
+
+		// Tasks
+		r.Get("/workspaces/{workspaceId}/tasks", app.middlewareAuth(app.getTasksHandler))
+
+		r.Get("/workspaces/{workspaceId}/options", app.middlewareAuth(app.getTaskOptions))
+
+		r.Post("/workspaces/{workspaceId}/tasks", app.middlewareAuth(app.createTaskHandler))
 	})
 
 	return r

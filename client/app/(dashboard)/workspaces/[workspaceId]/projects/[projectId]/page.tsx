@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import ProjectAvatar from "@/components/ProjectAvatar";
 import LoadingScreen from "@/components/LoadingScreen";
 import { getWorkspaceProjectById } from "@/lib/data/projects";
+import TaskViewSwitcher from "@/components/task/TaskViewSwitcher";
 import EditProjectModal from "@/components/forms/project/EditProjectModal";
 import DeleteProjectModal from "@/components/forms/project/DeleteProjectModal";
 
@@ -72,6 +73,8 @@ export default async function ProjectPage({
             />
           </div>
         </div>
+
+        <TaskViewSwitcher />
       </div>
     </Suspense>
   );

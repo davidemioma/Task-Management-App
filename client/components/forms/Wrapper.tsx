@@ -70,7 +70,7 @@ const Wrapper = ({
         </DrawerTrigger>
       )}
 
-      <DrawerContent className="p-5">
+      <DrawerContent className={cn("p-5", className)}>
         <DrawerHeader>
           <DrawerTitle>{title || "Create Workspace"}</DrawerTitle>
         </DrawerHeader>
