@@ -1,11 +1,57 @@
 "use client";
 
 import React from "react";
+import { Loader2 } from "lucide-react";
+import TaskFilters from "./TaskFilters";
 import { Separator } from "../ui/separator";
+import { useQuery } from "@tanstack/react-query";
+import { getWorkspaceTasksId } from "@/lib/utils";
+import { getFilteredTasks } from "@/lib/data/tasks";
 import CreateTaskModal from "../forms/task/CreateTaskModal";
+import { useParams, useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TaskViewSwitcher = () => {
+  const params = useParams();
+
+  const searchParams = useSearchParams();
+
+  const workspaceId = params.workspaceId;
+
+  const projectId = params.projectId;
+
+  const status = searchParams.get("status");
+
+  const assigneeId = searchParams.get("assigneeId");
+
+  const dueDate = searchParams.get("dueDate");
+
+  const {
+    data: tasks,
+    isLoading: isLoadingTasks,
+    isError: isTasksError,
+  } = useQuery({
+    queryKey: [
+      getWorkspaceTasksId,
+      workspaceId,
+      projectId,
+      assigneeId,
+      dueDate,
+      status,
+    ],
+    queryFn: async () => {
+      const result = await getFilteredTasks({
+        workspaceId: workspaceId as string,
+        projectId: projectId as string,
+        status: status,
+        assigneeId: assigneeId,
+        dueDate: dueDate,
+      });
+
+      return result;
+    },
+  });
+
   return (
     <Tabs defaultValue="table" className="w-full border rounded-lg">
       <div className="h-full flex flex-col p-4 overflow-auto">
@@ -29,23 +75,33 @@ const TaskViewSwitcher = () => {
 
         <Separator className="my-4" />
 
-        <div>Filters</div>
+        <TaskFilters />
 
         <Separator className="my-4" />
 
-        <>
-          <TabsContent className="mt-0" value="table">
-            Table
-          </TabsContent>
+        {isLoadingTasks ? (
+          <div className="w-full h-[250px] flex items-center justify-center border rounded-lg">
+            <Loader2 className="size-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : isTasksError ? (
+          <div className="w-full h-[250px] flex items-center justify-center border rounded-lg">
+            <span className="text-muted-foreground">Unable to get tasks</span>
+          </div>
+        ) : (
+          <>
+            <TabsContent className="mt-0" value="table">
+              {JSON.stringify(tasks)}
+            </TabsContent>
 
-          <TabsContent className="mt-0" value="kanban">
-            Kanban
-          </TabsContent>
+            <TabsContent className="mt-0" value="kanban">
+              {JSON.stringify(tasks)}
+            </TabsContent>
 
-          <TabsContent className="mt-0" value="calendar">
-            Calendar
-          </TabsContent>
-        </>
+            <TabsContent className="mt-0" value="calendar">
+              {JSON.stringify(tasks)}
+            </TabsContent>
+          </>
+        )}
       </div>
     </Tabs>
   );

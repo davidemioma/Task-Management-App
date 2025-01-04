@@ -13,12 +13,20 @@ import {
 } from "@/components/ui/popover";
 
 type Props = {
-  isPending: boolean;
+  isPending?: boolean;
+  placeholder?: string;
   value: Date | undefined;
   onChange: (date: Date) => void;
+  isSearch?: boolean;
 };
 
-const DatePicker = ({ isPending, value, onChange }: Props) => {
+const DatePicker = ({
+  isPending,
+  isSearch,
+  placeholder,
+  value,
+  onChange,
+}: Props) => {
   return (
     <Popover>
       <PopoverTrigger asChild disabled={isPending}>
@@ -30,20 +38,33 @@ const DatePicker = ({ isPending, value, onChange }: Props) => {
             !value && "text-muted-foreground"
           )}
         >
-          {value ? format(value, "PPP") : <span>Pick a date</span>}
+          {value ? (
+            format(value, "PPP")
+          ) : (
+            <span>{placeholder || "Pick a date"}</span>
+          )}
 
           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
         </Button>
       </PopoverTrigger>
 
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={value}
-          onSelect={(date) => onChange(date as Date)}
-          disabled={(date) => date < new Date() || isPending}
-          initialFocus
-        />
+        {isSearch ? (
+          <Calendar
+            mode="single"
+            selected={value}
+            onSelect={(date) => onChange(date as Date)}
+            initialFocus
+          />
+        ) : (
+          <Calendar
+            mode="single"
+            selected={value}
+            onSelect={(date) => onChange(date as Date)}
+            disabled={(date) => date < new Date()}
+            initialFocus
+          />
+        )}
       </PopoverContent>
     </Popover>
   );

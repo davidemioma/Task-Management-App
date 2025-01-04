@@ -98,11 +98,11 @@ func (app *application) mount() http.Handler {
 		r.Delete("/workspaces/{workspaceId}/projects/{projectId}", app.middlewareAuth(app.deleteProjectHandler))
 
 		// Tasks
-		r.Get("/workspaces/{workspaceId}/tasks", app.middlewareAuth(app.getTasksHandler))
-
 		r.Get("/workspaces/{workspaceId}/options", app.middlewareAuth(app.getTaskOptions))
 
 		r.Post("/workspaces/{workspaceId}/tasks", app.middlewareAuth(app.createTaskHandler))
+
+		r.Get("/workspaces/{workspaceId}/projects/{projectId}/tasks", app.middlewareAuth(app.getTasksHandler))
 	})
 
 	return r

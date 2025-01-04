@@ -117,11 +117,11 @@ func (app *application) createTaskHandler(w http.ResponseWriter, r *http.Request
 		ID: uuid.New(),
 		WorkspaceID: member.WorkspaceID,
 		ProjectID: validProjectId,
-		AssigneeID: validAssigneeId,
+		AssigneeID: uuid.NullUUID{UUID: validAssigneeId, Valid: validAssigneeId != uuid.UUID{}},
 		Name: params.Name,
 		Description: sql.NullString{String: params.Description, Valid: params.Description != ""},
-		Status: params.Status,
-		DueDate: due_date,
+		Status: sql.NullString{String: params.Status, Valid: params.Status != ""},
+		DueDate: sql.NullTime{Time: due_date, Valid: due_date != time.Time{}},
 		Position: int32(position),
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
@@ -142,7 +142,9 @@ func (app *application) getTasksHandler(w http.ResponseWriter, r *http.Request, 
 	// Get the workspace and project Id from the URL params
     workspaceId := chi.URLParam(r, "workspaceId")
 
-    if workspaceId == "" {
+	projectId := chi.URLParam(r, "projectId")
+
+    if workspaceId == "" || projectId == "" {
 		respondWithError(w, http.StatusBadRequest, "Workspace and project ID required")
         
         return
@@ -152,6 +154,14 @@ func (app *application) getTasksHandler(w http.ResponseWriter, r *http.Request, 
 
 	if invalidIdErr != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid Workspace ID format")
+        
+        return
+	}
+
+	validProjectId, invalidProjIdErr := uuid.Parse(projectId)
+
+	if invalidProjIdErr != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid Project ID format")
         
         return
 	}
@@ -168,76 +178,131 @@ func (app *application) getTasksHandler(w http.ResponseWriter, r *http.Request, 
 	}
 
 	// Retrieve query parameters
-    projectId, _ := uuid.Parse(r.URL.Query().Get("projectId"))
-    status := r.URL.Query().Get("status") 
-    dueDate, _ := parseDueDate(r.URL.Query().Get("due_date"))
-    assigneeId, _ := uuid.Parse(r.URL.Query().Get("assignee_id"))
-    search := r.URL.Query().Get("search") 
+    statusStr := r.URL.Query().Get("status") 
+    dueDateStr := r.URL.Query().Get("dueDate")
+    assigneeIdStr := r.URL.Query().Get("assigneeId")
+
+	app.logger.Printf("status=%v, dueDate=%v, assignedId=%v", statusStr, dueDateStr, assigneeIdStr)
 
 	// Get tasks
-	tasks, dbErr := app.storage.DB.GetTasksByFilters(r.Context(), database.GetTasksByFiltersParams{
-		Column1: projectId,
-		Column2: status,
-		Column3: dueDate,
-		Column4: assigneeId,
-		Column5: sql.NullString{String: search, Valid: search != ""},
-	})
+	var tasks []database.Task
 
-    if dbErr != nil {
- 		respondWithError(w, http.StatusInternalServerError, "Unable to get tasks.")
+	hasFilters := statusStr != "" || dueDateStr != "" || assigneeIdStr != ""
 
-		app.logger.Printf("Unable to get tasks: %v", dbErr)
+	if hasFilters {
+		var assignedId uuid.UUID
 
-        return
-    }
+		var status sql.NullString
+
+	    var dueDate time.Time
+
+		if (assigneeIdStr != ""){
+			id, err := uuid.Parse(assigneeIdStr)
+
+			if err == nil {
+			    assignedId = id
+		    }
+		}
+
+		if (statusStr != ""){
+			status = sql.NullString{String: statusStr, Valid: true}
+		}
+
+		if dueDateStr != "" {
+			parsedDate, err := parseDueDate(dueDateStr) 
+
+			if err == nil {
+				dueDate = parsedDate
+			}
+	    }
+
+		dbFilteredTasks, dbFilteredErr := app.storage.DB.GetFilteredTasks(r.Context(), database.GetFilteredTasksParams{
+			WorkspaceID: member.WorkspaceID,
+			ProjectID: validProjectId,
+			Column3: assignedId,
+			Column4: status,
+			Column5: dueDate,
+		})
+
+		if dbFilteredErr != nil {
+			respondWithError(w, http.StatusInternalServerError, "Unable to get tasks.")
+
+			app.logger.Printf("Unable to get tasks: %v", dbFilteredErr)
+
+			return
+		}
+
+		tasks = dbFilteredTasks
+	} else {
+		dbTasks, dbErr := app.storage.DB.GetAllTasks(r.Context(), database.GetAllTasksParams{
+			WorkspaceID: member.WorkspaceID,
+			ProjectID: validProjectId,
+		})
+
+		if dbErr != nil {
+			respondWithError(w, http.StatusInternalServerError, "Unable to get tasks.")
+
+			app.logger.Printf("Unable to get tasks: %v", dbErr)
+
+			return
+		}
+
+		tasks = dbTasks
+	}
+
+	if (len(tasks) == 0){
+		app.logger.Printf("No tasks available")
+
+		respondWithJSON(w, http.StatusOK, []JsonTask{})
+	}
 
 	var allTasks []JsonTask
 
 	for _, task := range tasks{
-		user, usrErr := app.storage.DB.GetUserById(r.Context(), task.AssigneeID)
+			assignee, usrErr := app.storage.DB.GetUserById(r.Context(), task.AssigneeID.UUID)
 
-		if usrErr != nil {
-			respondWithError(w, http.StatusNotFound, "Unable to get user.")
+			if usrErr != nil {
+				respondWithError(w, http.StatusNotFound, "Unable to get user.")
 
-			app.logger.Printf("Unable to get user: %v", usrErr)
+				app.logger.Printf("Unable to get user: %v", usrErr)
 
-			return
-        }
+				return
+			}
 
-		project, projErr := app.storage.DB.GetTaskProject(r.Context(), database.GetTaskProjectParams{
-			ID: task.ProjectID,
-			WorkspaceID: task.WorkspaceID,
-		})
+			project, projErr := app.storage.DB.GetTaskProject(r.Context(), database.GetTaskProjectParams{
+				ID: task.ProjectID,
+				WorkspaceID: task.WorkspaceID,
+			})
 
-		if projErr != nil {
-			respondWithError(w, http.StatusNotFound, "Unable to get project.")
+			if projErr != nil {
+				respondWithError(w, http.StatusNotFound, "Unable to get project.")
 
-			app.logger.Printf("Unable to get project: %v", projErr)
+				app.logger.Printf("Unable to get project: %v", projErr)
 
-			return
-        }
+				return
+			}
 
-		allTasks = append(allTasks, JsonTask{
-			ID: task.ID,
-			WorkspaceID: task.WorkspaceID,
-			ProjectID: task.ProjectID,
-			AssigneeID: task.AssigneeID,
-			Name: task.Name,
-			Description: task.Description.String,
-			Position: task.Position,
-			DueDate: task.DueDate,
-			Status: task.Status,
-			CreatedAt: task.CreatedAt,
-			UpdatedAt: task.UpdatedAt,
-			User: TaskUser{
-				Username: user.Username,
-				Image: user.Image.String,
-			},
-			Project: TaskProject{
-				Name: project.Name,
-				ImageUrl: project.ImageUrl.String,
-			},
-		})
+			allTasks = append(allTasks, JsonTask{
+				ID: task.ID,
+				WorkspaceID: task.WorkspaceID,
+				ProjectID: task.ProjectID,
+				AssigneeID: task.AssigneeID.UUID,
+				Name: task.Name,
+				Description: task.Description.String,
+				Position: task.Position,
+				DueDate: task.DueDate.Time,
+				Status: task.Status.String,
+				CreatedAt: task.CreatedAt,
+				UpdatedAt: task.UpdatedAt,
+				User: TaskUser{
+					Username: assignee.Username,
+					Image: assignee.Image.String,
+				},
+				Project: TaskProject{
+					Name: project.Name,
+					ImageUrl: project.ImageUrl.String,
+				},
+			})
 	}
 
 	respondWithJSON(w, http.StatusOK, allTasks)

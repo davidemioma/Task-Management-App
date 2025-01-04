@@ -6,13 +6,14 @@ import { useForm } from "react-hook-form";
 import { useParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { getWorkspaceTasksId } from "@/lib/utils";
 import { createTask } from "@/lib/actions/tasks";
 import { getTaskOptions } from "@/lib/data/tasks";
 import { Textarea } from "@/components/ui/textarea";
 import DatePicker from "@/components/ui/date-picker";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { OptionsProps, WorkspaceTaskProps } from "@/types";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { TaskSchema, TaskStatus, TaskValidator } from "@/lib/validators/task";
 import {
@@ -38,6 +39,8 @@ type Props = {
 
 const TaskForm = ({ initialData, onClose }: Props) => {
   const params = useParams();
+
+  const queryClient = useQueryClient();
 
   const projectId = params.projectId;
 
@@ -84,6 +87,10 @@ const TaskForm = ({ initialData, onClose }: Props) => {
       }
 
       toast.success("New task created");
+
+      queryClient.invalidateQueries({
+        queryKey: [getWorkspaceTasksId, workspaceId, projectId],
+      });
 
       form.reset();
 

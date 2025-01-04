@@ -33,12 +33,12 @@ type Task struct {
 	ID          uuid.UUID
 	WorkspaceID uuid.UUID
 	ProjectID   uuid.UUID
-	AssigneeID  uuid.UUID
+	AssigneeID  uuid.NullUUID
 	Name        string
 	Description sql.NullString
 	Position    int32
-	DueDate     time.Time
-	Status      string
+	DueDate     sql.NullTime
+	Status      sql.NullString
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }

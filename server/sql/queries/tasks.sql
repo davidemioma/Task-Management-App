@@ -5,13 +5,21 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);
 -- name: GetTaskWithHighestPosition :one
 SELECT position FROM tasks WHERE workspace_id = $1 AND project_id = $2 ORDER BY position DESC LIMIT 1;
 
--- name: GetTasksByFilters :many
+-- name: GetAllTasks :many
 SELECT * FROM tasks
-WHERE ($1::uuid IS NULL OR project_id = $1)
-  AND ($2::text IS NULL OR status = $2)
-  AND ($3::date IS NULL OR due_date = $3)
-  AND ($4::uuid IS NULL OR assignee_id = $4)
-  AND (LOWER(name) LIKE LOWER('%' || $5 || '%') OR $5 IS NULL)
+WHERE 
+    workspace_id = $1
+    AND project_id = $2
+ORDER BY created_at DESC;
+
+-- name: GetFilteredTasks :many
+SELECT * FROM tasks
+WHERE 
+    workspace_id = $1
+    AND project_id = $2
+    AND ($3::uuid IS NULL OR assignee_id = $3::uuid)
+    AND ($4 = '' OR status = $4)
+    AND ($5::timestamp IS NULL OR due_date = $5::timestamp)  
 ORDER BY created_at DESC;
 
 -- name: GetUserById :one

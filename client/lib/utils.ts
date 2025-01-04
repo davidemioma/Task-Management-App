@@ -8,3 +8,5 @@ export function cn(...inputs: ClassValue[]) {
 export const getWorkspaceQueryId = "get-workspaces";
 
 export const getWorkspaceProjectsQueryId = "get-workspace-projects";
+
+export const getWorkspaceTasksId = "get-workspace-tasks";

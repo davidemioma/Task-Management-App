@@ -22,12 +22,12 @@ type CreateTaskParams struct {
 	ID          uuid.UUID
 	WorkspaceID uuid.UUID
 	ProjectID   uuid.UUID
-	AssigneeID  uuid.UUID
+	AssigneeID  uuid.NullUUID
 	Name        string
 	Description sql.NullString
 	Position    int32
-	DueDate     time.Time
-	Status      string
+	DueDate     sql.NullTime
+	Status      sql.NullString
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -47,6 +47,114 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) error {
 		arg.UpdatedAt,
 	)
 	return err
+}
+
+const getAllTasks = `-- name: GetAllTasks :many
+SELECT id, workspace_id, project_id, assignee_id, name, description, position, due_date, status, created_at, updated_at FROM tasks
+WHERE 
+    workspace_id = $1
+    AND project_id = $2
+ORDER BY created_at DESC
+`
+
+type GetAllTasksParams struct {
+	WorkspaceID uuid.UUID
+	ProjectID   uuid.UUID
+}
+
+func (q *Queries) GetAllTasks(ctx context.Context, arg GetAllTasksParams) ([]Task, error) {
+	rows, err := q.db.QueryContext(ctx, getAllTasks, arg.WorkspaceID, arg.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Task
+	for rows.Next() {
+		var i Task
+		if err := rows.Scan(
+			&i.ID,
+			&i.WorkspaceID,
+			&i.ProjectID,
+			&i.AssigneeID,
+			&i.Name,
+			&i.Description,
+			&i.Position,
+			&i.DueDate,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getFilteredTasks = `-- name: GetFilteredTasks :many
+SELECT id, workspace_id, project_id, assignee_id, name, description, position, due_date, status, created_at, updated_at FROM tasks
+WHERE 
+    workspace_id = $1
+    AND project_id = $2
+    AND ($3::uuid IS NULL OR assignee_id = $3::uuid)
+    AND ($4 = '' OR status = $4)
+    AND ($5::timestamp IS NULL OR due_date = $5::timestamp)  
+ORDER BY created_at DESC
+`
+
+type GetFilteredTasksParams struct {
+	WorkspaceID uuid.UUID
+	ProjectID   uuid.UUID
+	Column3     uuid.UUID
+	Column4     interface{}
+	Column5     time.Time
+}
+
+func (q *Queries) GetFilteredTasks(ctx context.Context, arg GetFilteredTasksParams) ([]Task, error) {
+	rows, err := q.db.QueryContext(ctx, getFilteredTasks,
+		arg.WorkspaceID,
+		arg.ProjectID,
+		arg.Column3,
+		arg.Column4,
+		arg.Column5,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Task
+	for rows.Next() {
+		var i Task
+		if err := rows.Scan(
+			&i.ID,
+			&i.WorkspaceID,
+			&i.ProjectID,
+			&i.AssigneeID,
+			&i.Name,
+			&i.Description,
+			&i.Position,
+			&i.DueDate,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getTaskMembers = `-- name: GetTaskMembers :many
@@ -162,65 +270,6 @@ func (q *Queries) GetTaskWithHighestPosition(ctx context.Context, arg GetTaskWit
 	var position int32
 	err := row.Scan(&position)
 	return position, err
-}
-
-const getTasksByFilters = `-- name: GetTasksByFilters :many
-SELECT id, workspace_id, project_id, assignee_id, name, description, position, due_date, status, created_at, updated_at FROM tasks
-WHERE ($1::uuid IS NULL OR project_id = $1)
-  AND ($2::text IS NULL OR status = $2)
-  AND ($3::date IS NULL OR due_date = $3)
-  AND ($4::uuid IS NULL OR assignee_id = $4)
-  AND (LOWER(name) LIKE LOWER('%' || $5 || '%') OR $5 IS NULL)
-ORDER BY created_at DESC
-`
-
-type GetTasksByFiltersParams struct {
-	Column1 uuid.UUID
-	Column2 string
-	Column3 time.Time
-	Column4 uuid.UUID
-	Column5 sql.NullString
-}
-
-func (q *Queries) GetTasksByFilters(ctx context.Context, arg GetTasksByFiltersParams) ([]Task, error) {
-	rows, err := q.db.QueryContext(ctx, getTasksByFilters,
-		arg.Column1,
-		arg.Column2,
-		arg.Column3,
-		arg.Column4,
-		arg.Column5,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Task
-	for rows.Next() {
-		var i Task
-		if err := rows.Scan(
-			&i.ID,
-			&i.WorkspaceID,
-			&i.ProjectID,
-			&i.AssigneeID,
-			&i.Name,
-			&i.Description,
-			&i.Position,
-			&i.DueDate,
-			&i.Status,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const getUserById = `-- name: GetUserById :one
