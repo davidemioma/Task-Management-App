@@ -49,6 +49,21 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) error {
 	return err
 }
 
+const deleteTask = `-- name: DeleteTask :exec
+DELETE FROM tasks WHERE id = $1 AND workspace_id = $2 AND project_id = $3
+`
+
+type DeleteTaskParams struct {
+	ID          uuid.UUID
+	WorkspaceID uuid.UUID
+	ProjectID   uuid.UUID
+}
+
+func (q *Queries) DeleteTask(ctx context.Context, arg DeleteTaskParams) error {
+	_, err := q.db.ExecContext(ctx, deleteTask, arg.ID, arg.WorkspaceID, arg.ProjectID)
+	return err
+}
+
 const getAllTasks = `-- name: GetAllTasks :many
 SELECT id, workspace_id, project_id, assignee_id, name, description, position, due_date, status, created_at, updated_at FROM tasks
 WHERE 
@@ -286,4 +301,47 @@ func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (GetUserByIdRow
 	var i GetUserByIdRow
 	err := row.Scan(&i.Username, &i.Image)
 	return i, err
+}
+
+const updateTask = `-- name: UpdateTask :exec
+UPDATE tasks
+SET 
+    name = $1,
+    description = $2,
+    status = $3,
+    due_date = $4,
+    position = $5,
+    assignee_id = $6,
+    project_id = $7,
+    updated_at = NOW()
+WHERE id = $8 AND workspace_id = $9 AND project_id = $10
+`
+
+type UpdateTaskParams struct {
+	Name        string
+	Description sql.NullString
+	Status      sql.NullString
+	DueDate     sql.NullTime
+	Position    int32
+	AssigneeID  uuid.NullUUID
+	ProjectID   uuid.UUID
+	ID          uuid.UUID
+	WorkspaceID uuid.UUID
+	ProjectID_2 uuid.UUID
+}
+
+func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) error {
+	_, err := q.db.ExecContext(ctx, updateTask,
+		arg.Name,
+		arg.Description,
+		arg.Status,
+		arg.DueDate,
+		arg.Position,
+		arg.AssigneeID,
+		arg.ProjectID,
+		arg.ID,
+		arg.WorkspaceID,
+		arg.ProjectID_2,
+	)
+	return err
 }

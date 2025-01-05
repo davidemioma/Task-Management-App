@@ -3,21 +3,11 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { cn, getWorkspaceQueryId } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import { getWorkspaceQueryId } from "@/lib/utils";
 import { deleteWorkspace } from "@/lib/actions/workspace";
+import DeleteModal from "@/components/modals/DeleteModal";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 
 type Props = {
   workspaceId: string;
@@ -58,44 +48,18 @@ const DeleteWorkspace = ({ workspaceId }: Props) => {
   });
 
   return (
-    <AlertDialog
+    <DeleteModal
       open={open}
-      onOpenChange={() => {
-        if (isPending) return;
-
-        setOpen((prev) => !prev);
-      }}
+      setOpen={setOpen}
+      title="Are you absolutely sure?"
+      subtitle="This action cannot be undone. This will permanently delete your workspace."
+      isPending={isPending}
+      onDelete={mutate}
     >
-      <AlertDialogTrigger
-        className={cn(buttonVariants({ variant: "destructive" }))}
-      >
+      <Button variant="destructive" size="sm">
         Delete Workspace
-      </AlertDialogTrigger>
-
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-
-          <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete your
-            workspace from our servers.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-
-          <AlertDialogAction
-            onClick={() => {
-              mutate();
-            }}
-            disabled={isPending}
-          >
-            Continue
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      </Button>
+    </DeleteModal>
   );
 };
 

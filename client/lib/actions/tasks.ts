@@ -56,3 +56,50 @@ export const createTask = async ({
     }
   }
 };
+
+export const deleteTask = async ({
+  workspaceId,
+  projectId,
+  taskId,
+}: {
+  workspaceId: string;
+  projectId: string;
+  taskId: string;
+}) => {
+  try {
+    const user = await currentUser();
+
+    if (!user) {
+      throw new Error("Unauthorized, Youn need to sign in!");
+    }
+
+    const res = await axios.delete(
+      `${process.env.NEXT_PUBLIC_BASE_API_URL}/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}`,
+      {
+        headers: {
+          Authorization: `clerkId ${user.id}`,
+        },
+      }
+    );
+
+    const result = await res.data;
+
+    revalidatePath(`/workspaces/${workspaceId}/projects/${projectId}`);
+
+    return { status: res.status, data: result };
+  } catch (err) {
+    console.error("Create Task", err);
+
+    if (err instanceof AxiosError) {
+      if (err.response?.status === 401) {
+        throw new Error(
+          "You are not authorized to perform this action. Only members of a workspace!"
+        );
+      } else {
+        throw new Error(err.response?.data);
+      }
+    } else {
+      throw new Error("Something went wrong! Internal server error.");
+    }
+  }
+};

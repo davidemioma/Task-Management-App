@@ -1,9 +1,11 @@
 "use client";
 
 import React from "react";
+import { columns } from "./Columns";
 import { Loader2 } from "lucide-react";
 import TaskFilters from "./TaskFilters";
 import { Separator } from "../ui/separator";
+import { DataTable } from "../ui/data-table";
 import { useQuery } from "@tanstack/react-query";
 import { getWorkspaceTasksId } from "@/lib/utils";
 import { getFilteredTasks } from "@/lib/data/tasks";
@@ -52,6 +54,8 @@ const TaskViewSwitcher = () => {
     },
   });
 
+  console.log(tasks);
+
   return (
     <Tabs defaultValue="table" className="w-full border rounded-lg">
       <div className="h-full flex flex-col p-4 overflow-auto">
@@ -90,15 +94,19 @@ const TaskViewSwitcher = () => {
         ) : (
           <>
             <TabsContent className="mt-0" value="table">
-              {JSON.stringify(tasks)}
+              {tasks && tasks[0].id ? (
+                <DataTable searchKey="name" columns={columns} data={tasks} />
+              ) : (
+                <DataTable columns={columns} data={[]} />
+              )}
             </TabsContent>
 
             <TabsContent className="mt-0" value="kanban">
-              {JSON.stringify(tasks)}
+              <div>Todo</div>
             </TabsContent>
 
             <TabsContent className="mt-0" value="calendar">
-              {JSON.stringify(tasks)}
+              <div>Todo</div>
             </TabsContent>
           </>
         )}

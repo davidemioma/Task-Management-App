@@ -253,7 +253,7 @@ func (app *application) getTasksHandler(w http.ResponseWriter, r *http.Request, 
 	if (len(tasks) == 0){
 		app.logger.Printf("No tasks available")
 
-		respondWithJSON(w, http.StatusOK, []JsonTask{})
+		respondWithJSON(w, http.StatusOK, nil)
 	}
 
 	var allTasks []JsonTask
@@ -363,4 +363,71 @@ func (app *application) getTaskOptions(w http.ResponseWriter, r *http.Request, u
 		Projects: projectsToJsonProjects(projects),
 		Members: membersToJsonMembers(members),
 	})
+}
+
+func (app *application) deleteTasksHandler(w http.ResponseWriter, r *http.Request, user database.User) {
+	// Get the workspace, project and task Id from the URL params
+    workspaceId := chi.URLParam(r, "workspaceId")
+
+	projectId := chi.URLParam(r, "projectId")
+
+	taskId := chi.URLParam(r, "taskId")
+
+    if workspaceId == "" || projectId == "" || taskId == "" {
+		respondWithError(w, http.StatusBadRequest, "Workspace, project and task ID required")
+        
+        return
+    }
+
+	validWorkspaceId, invalidIdErr := uuid.Parse(workspaceId)
+
+	if invalidIdErr != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid Workspace ID format")
+        
+        return
+	}
+
+	validProjectId, invalidProjIdErr := uuid.Parse(projectId)
+
+	if invalidProjIdErr != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid Project ID format")
+        
+        return
+	}
+
+	validTaskId, invalidTaskIdErr := uuid.Parse(taskId)
+
+	if invalidTaskIdErr != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid Task ID format")
+        
+        return
+	}
+	
+	// Check if current user is a member and an admin
+	member := app.getMemberHandler(r.Context(), validWorkspaceId, user.ID)
+
+	if (member.ID == uuid.Nil){
+		respondWithError(w, http.StatusUnauthorized, "You are not a member of this workspace.")
+
+		app.logger.Printf("Create Task Error: You are not a member of this workspace.")
+        
+        return
+	}
+
+	// Delete task
+	dbErr := app.storage.DB.DeleteTask(r.Context(), database.DeleteTaskParams{
+		ID: validTaskId,
+		WorkspaceID: member.WorkspaceID,
+		ProjectID: validProjectId,
+	})
+
+	if dbErr != nil {
+ 		respondWithError(w, http.StatusInternalServerError, "Unable to delete task.")
+
+		app.logger.Printf("Unable to delete task: %v", dbErr)
+
+        return
+    }
+
+	respondWithJSON(w, http.StatusOK, "Deleted task!")
 }

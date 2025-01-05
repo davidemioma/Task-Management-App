@@ -37,3 +37,19 @@ FROM members m
 LEFT JOIN users u ON m.user_id = u.id
 WHERE m.workspace_id = $1
 ORDER BY m.created_at ASC;
+
+-- name: UpdateTask :exec
+UPDATE tasks
+SET 
+    name = $1,
+    description = $2,
+    status = $3,
+    due_date = $4,
+    position = $5,
+    assignee_id = $6,
+    project_id = $7,
+    updated_at = NOW()
+WHERE id = $8 AND workspace_id = $9 AND project_id = $10;
+
+-- name: DeleteTask :exec
+DELETE FROM tasks WHERE id = $1 AND workspace_id = $2 AND project_id = $3;

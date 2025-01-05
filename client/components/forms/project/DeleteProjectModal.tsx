@@ -4,21 +4,11 @@ import React, { useState } from "react";
 import { toast } from "sonner";
 import { Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { deleteProject } from "@/lib/actions/projects";
-import { buttonVariants } from "@/components/ui/button";
-import { cn, getWorkspaceProjectsQueryId } from "@/lib/utils";
+import DeleteModal from "@/components/modals/DeleteModal";
+import { getWorkspaceProjectsQueryId } from "@/lib/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 
 type Props = {
   workspaceId: string;
@@ -60,43 +50,19 @@ const DeleteProjectModal = ({ workspaceId, projectId }: Props) => {
   });
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger
-        className={cn(
-          buttonVariants({
-            variant: "destructive",
-            size: "sm",
-          })
-        )}
-      >
+    <DeleteModal
+      open={open}
+      setOpen={setOpen}
+      title="Are you absolutely sure?"
+      subtitle="This action cannot be undone. This will permanently delete your project."
+      isPending={isPending}
+      onDelete={mutate}
+    >
+      <Button variant="destructive" size="sm">
         <Trash />
         Delete Project
-      </AlertDialogTrigger>
-
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-
-          <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete your
-            project.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-
-          <AlertDialogAction
-            onClick={() => {
-              mutate();
-            }}
-            disabled={isPending}
-          >
-            Continue
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      </Button>
+    </DeleteModal>
   );
 };
 

@@ -10,3 +10,10 @@ export const getWorkspaceQueryId = "get-workspaces";
 export const getWorkspaceProjectsQueryId = "get-workspace-projects";
 
 export const getWorkspaceTasksId = "get-workspace-tasks";
+
+export const snakeCaseToTitleCase = (str: string) => {
+  return str
+    .toLowerCase()
+    .replace("/_/g", " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
