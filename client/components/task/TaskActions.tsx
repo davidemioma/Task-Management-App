@@ -17,6 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import UpdateTaskModal from "../forms/task/UpdateTaskModal";
 
 type Props = {
   data: WorkspaceTaskProps;
@@ -27,6 +28,8 @@ const TaskActions = ({ data }: Props) => {
 
   const [openDelete, setOpenDelete] = useState(false);
 
+  const [openUpdate, setOpenUpdate] = useState(false);
+
   return (
     <>
       {openDelete && (
@@ -36,6 +39,15 @@ const TaskActions = ({ data }: Props) => {
           workspaceId={data.workspaceId}
           projectId={data.projectId}
           taskId={data.id}
+        />
+      )}
+
+      {openUpdate && (
+        <UpdateTaskModal
+          open={openUpdate}
+          setOpen={() => setOpenUpdate((prev) => !prev)}
+          task={data}
+          onClose={() => setOpenUpdate(false)}
         />
       )}
 
@@ -60,7 +72,7 @@ const TaskActions = ({ data }: Props) => {
             Task Details
           </DropdownMenuItem>
 
-          <DropdownMenuItem onClick={() => {}}>
+          <DropdownMenuItem onClick={() => setOpenUpdate(true)}>
             <PencilIcon className="size-4 stroke-2" />
             Edit Task
           </DropdownMenuItem>

@@ -13,6 +13,27 @@ import (
 	"github.com/google/uuid"
 )
 
+const checkProjectExists = `-- name: CheckProjectExists :one
+SELECT id, name FROM projects WHERE workspace_id = $1 AND id = $2
+`
+
+type CheckProjectExistsParams struct {
+	WorkspaceID uuid.UUID
+	ID          uuid.UUID
+}
+
+type CheckProjectExistsRow struct {
+	ID   uuid.UUID
+	Name string
+}
+
+func (q *Queries) CheckProjectExists(ctx context.Context, arg CheckProjectExistsParams) (CheckProjectExistsRow, error) {
+	row := q.db.QueryRowContext(ctx, checkProjectExists, arg.WorkspaceID, arg.ID)
+	var i CheckProjectExistsRow
+	err := row.Scan(&i.ID, &i.Name)
+	return i, err
+}
+
 const createProject = `-- name: CreateProject :exec
 INSERT INTO projects (id, workspace_id, name, image_url, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6)

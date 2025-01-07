@@ -8,6 +8,9 @@ SELECT * FROM projects WHERE workspace_id = $1 ORDER BY created_at DESC;
 -- name: GetProjectById :one
 SELECT * FROM projects WHERE workspace_id = $1 AND id = $2;
 
+-- name: CheckProjectExists :one
+SELECT id, name FROM projects WHERE workspace_id = $1 AND id = $2;
+
 -- name: UpdateProject :exec
 UPDATE projects
 SET 

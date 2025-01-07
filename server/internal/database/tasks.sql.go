@@ -13,6 +13,28 @@ import (
 	"github.com/google/uuid"
 )
 
+const checkForProjectChange = `-- name: CheckForProjectChange :one
+SELECT id, project_id, position FROM tasks WHERE workspace_id = $1 AND id = $2
+`
+
+type CheckForProjectChangeParams struct {
+	WorkspaceID uuid.UUID
+	ID          uuid.UUID
+}
+
+type CheckForProjectChangeRow struct {
+	ID        uuid.UUID
+	ProjectID uuid.UUID
+	Position  int32
+}
+
+func (q *Queries) CheckForProjectChange(ctx context.Context, arg CheckForProjectChangeParams) (CheckForProjectChangeRow, error) {
+	row := q.db.QueryRowContext(ctx, checkForProjectChange, arg.WorkspaceID, arg.ID)
+	var i CheckForProjectChangeRow
+	err := row.Scan(&i.ID, &i.ProjectID, &i.Position)
+	return i, err
+}
+
 const createTask = `-- name: CreateTask :exec
 INSERT INTO tasks (id, workspace_id, project_id, assignee_id, name, description, position, due_date, status, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -172,6 +194,25 @@ func (q *Queries) GetFilteredTasks(ctx context.Context, arg GetFilteredTasksPara
 	return items, nil
 }
 
+const getNumberOfTasks = `-- name: GetNumberOfTasks :one
+SELECT COUNT(*) as total_tasks 
+FROM tasks 
+WHERE status = $1 AND workspace_id = $2 AND project_id = $3
+`
+
+type GetNumberOfTasksParams struct {
+	Status      sql.NullString
+	WorkspaceID uuid.UUID
+	ProjectID   uuid.UUID
+}
+
+func (q *Queries) GetNumberOfTasks(ctx context.Context, arg GetNumberOfTasksParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getNumberOfTasks, arg.Status, arg.WorkspaceID, arg.ProjectID)
+	var total_tasks int64
+	err := row.Scan(&total_tasks)
+	return total_tasks, err
+}
+
 const getTaskMembers = `-- name: GetTaskMembers :many
 SELECT m.id, m.role, u.id AS user_id, u.username AS user_username, u.image AS user_image
 FROM members m
@@ -310,11 +351,11 @@ SET
     description = $2,
     status = $3,
     due_date = $4,
-    position = $5,
-    assignee_id = $6,
-    project_id = $7,
+    assignee_id = $5,
+    project_id = $6,
+    position = $7,
     updated_at = NOW()
-WHERE id = $8 AND workspace_id = $9 AND project_id = $10
+WHERE id = $8 AND workspace_id = $9
 `
 
 type UpdateTaskParams struct {
@@ -322,12 +363,11 @@ type UpdateTaskParams struct {
 	Description sql.NullString
 	Status      sql.NullString
 	DueDate     sql.NullTime
-	Position    int32
 	AssigneeID  uuid.NullUUID
 	ProjectID   uuid.UUID
+	Position    int32
 	ID          uuid.UUID
 	WorkspaceID uuid.UUID
-	ProjectID_2 uuid.UUID
 }
 
 func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) error {
@@ -336,12 +376,37 @@ func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) error {
 		arg.Description,
 		arg.Status,
 		arg.DueDate,
-		arg.Position,
 		arg.AssigneeID,
 		arg.ProjectID,
+		arg.Position,
 		arg.ID,
 		arg.WorkspaceID,
-		arg.ProjectID_2,
+	)
+	return err
+}
+
+const updateTaskStatusAndPosition = `-- name: UpdateTaskStatusAndPosition :exec
+UPDATE tasks
+SET 
+   status = $1,
+   position = $2,
+   updated_at = NOW()
+WHERE id = $3 AND workspace_id = $4
+`
+
+type UpdateTaskStatusAndPositionParams struct {
+	Status      sql.NullString
+	Position    int32
+	ID          uuid.UUID
+	WorkspaceID uuid.UUID
+}
+
+func (q *Queries) UpdateTaskStatusAndPosition(ctx context.Context, arg UpdateTaskStatusAndPositionParams) error {
+	_, err := q.db.ExecContext(ctx, updateTaskStatusAndPosition,
+		arg.Status,
+		arg.Position,
+		arg.ID,
+		arg.WorkspaceID,
 	)
 	return err
 }

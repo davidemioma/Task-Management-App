@@ -4,6 +4,7 @@ import React from "react";
 import { columns } from "./Columns";
 import { Loader2 } from "lucide-react";
 import TaskFilters from "./TaskFilters";
+import TasksKanban from "./kanban/TasksKaban";
 import { Separator } from "../ui/separator";
 import { DataTable } from "../ui/data-table";
 import { useQuery } from "@tanstack/react-query";
@@ -54,13 +55,11 @@ const TaskViewSwitcher = () => {
     },
   });
 
-  console.log(tasks);
-
   return (
     <Tabs defaultValue="table" className="w-full border rounded-lg">
-      <div className="h-full flex flex-col p-4 overflow-auto">
-        <div className="flex flex-col lg:flex-row justify-between items-center gap-y-2">
-          <TabsList className="w-full lg:w-auto">
+      <div className="h-full w-full flex flex-col p-4">
+        <div className="flex flex-col md:flex-row justify-between md:items-center gap-y-2">
+          <TabsList className="w-full md:w-auto">
             <TabsTrigger className="h-8 w-full lg:w-auto" value="table">
               Table
             </TabsTrigger>
@@ -102,7 +101,7 @@ const TaskViewSwitcher = () => {
             </TabsContent>
 
             <TabsContent className="mt-0" value="kanban">
-              <div>Todo</div>
+              <TasksKanban data={tasks || []} />
             </TabsContent>
 
             <TabsContent className="mt-0" value="calendar">

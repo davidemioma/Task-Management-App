@@ -45,11 +45,27 @@ SET
     description = $2,
     status = $3,
     due_date = $4,
-    position = $5,
-    assignee_id = $6,
-    project_id = $7,
+    assignee_id = $5,
+    project_id = $6,
+    position = $7,
     updated_at = NOW()
-WHERE id = $8 AND workspace_id = $9 AND project_id = $10;
+WHERE id = $8 AND workspace_id = $9;
+
+-- name: CheckForProjectChange :one
+SELECT id, project_id, position FROM tasks WHERE workspace_id = $1 AND id = $2;
 
 -- name: DeleteTask :exec
 DELETE FROM tasks WHERE id = $1 AND workspace_id = $2 AND project_id = $3;
+
+-- name: GetNumberOfTasks :one
+SELECT COUNT(*) as total_tasks 
+FROM tasks 
+WHERE status = $1 AND workspace_id = $2 AND project_id = $3;
+
+-- name: UpdateTaskStatusAndPosition :exec
+UPDATE tasks
+SET 
+   status = $1,
+   position = $2,
+   updated_at = NOW()
+WHERE id = $3 AND workspace_id = $4;   

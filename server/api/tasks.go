@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"server/internal/database"
 	"time"
@@ -88,6 +89,21 @@ func (app *application) createTaskHandler(w http.ResponseWriter, r *http.Request
         return
 	}
 
+	// Check if task for a stutus is less than 30
+	tasksCount, tasksCountErr := app.storage.DB.GetNumberOfTasks(r.Context(), database.GetNumberOfTasksParams{
+		Status: sql.NullString{String: params.Status, Valid: params.Status != ""},
+		ProjectID: validProjectId,
+		WorkspaceID: member.WorkspaceID,
+	})
+
+	if tasksCountErr == nil && tasksCount == 30 {
+		respondWithError(w, http.StatusNotAcceptable, "Max tasks created")
+
+		app.logger.Printf("Max tasks created!")
+        
+        return
+	}
+
 	// Get highest task position
 	highestPosition, _ := app.storage.DB.GetTaskWithHighestPosition(r.Context(), database.GetTaskWithHighestPositionParams{
 		WorkspaceID: member.WorkspaceID,
@@ -100,7 +116,7 @@ func (app *application) createTaskHandler(w http.ResponseWriter, r *http.Request
 	if highestPosition > 0 {
 		position = int(highestPosition) + 1
 	} else {
-		position = 1
+		position = 0
 	}
 
 	due_date, dateErr := parseDueDate(params.DueDate)
@@ -431,3 +447,321 @@ func (app *application) deleteTasksHandler(w http.ResponseWriter, r *http.Reques
 
 	respondWithJSON(w, http.StatusOK, "Deleted task!")
 }
+
+func (app *application) updateTaskHandler(w http.ResponseWriter, r *http.Request, user database.User) {
+	// Get the workspace and task ID from the URL params
+    workspaceId := chi.URLParam(r, "workspaceId")
+
+	taskId := chi.URLParam(r, "taskId")
+
+    if workspaceId == "" || taskId == "" {
+		respondWithError(w, http.StatusBadRequest, "Workspace ID is required")
+        
+        return
+    }
+
+	validWorkspaceId, invalidIdErr := uuid.Parse(workspaceId)
+
+	if invalidIdErr != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid Workspace ID format")
+        
+        return
+	}
+
+	validTaskId, invalidTaskIdErr := uuid.Parse(taskId)
+
+	if invalidTaskIdErr != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid Task ID format")
+        
+        return
+	}
+
+	// Get current task
+	task, taskErr := app.storage.DB.CheckForProjectChange(r.Context(), database.CheckForProjectChangeParams{
+		ID: validTaskId,
+		WorkspaceID: validWorkspaceId,
+	})
+
+	if taskErr != nil {
+		app.logger.Printf("Task not found: %v", taskErr)
+		
+		respondWithError(w, http.StatusNotFound, "Task not found")
+
+		return
+	}
+	
+	type parameters struct {
+		AssigneeId  string  `json:"assigneeId"`
+		ProjectId   string  `json:"projectId"`
+		Name        string  `json:"name"`
+		Description string  `json:"description"`
+		Status      string  `json:"status"`
+		DueDate     string  `json:"dueDate"`
+	}
+
+	// Validating body
+	decoder := json.NewDecoder(r.Body)
+
+	params := parameters{}
+
+	err := decoder.Decode(&params)
+
+	if err != nil {
+		app.logger.Printf("Error parsing JSON: %v", err)
+		
+		respondWithError(w, http.StatusBadRequest, "Error parsing JSON")
+
+		return
+	}
+
+	if params.ProjectId == "" || params.AssigneeId == "" || params.Name == "" || params.Status == "" || params.DueDate == "" {
+		respondWithError(w, http.StatusBadRequest, "Invalid Parameters")
+
+		app.logger.Printf("Invalid Parameters")
+
+		return
+	}
+
+	validProjectId, invalidProjIdErr := uuid.Parse(params.ProjectId)
+
+	if invalidProjIdErr != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid Project ID format")
+        
+        return
+	}
+
+	validAssigneeId, invalidAssIdErr := uuid.Parse(params.AssigneeId)
+
+	if invalidAssIdErr != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid Assignee ID format")
+        
+        return
+	}
+
+	// Check if current user is a member and an admin
+	member := app.getMemberHandler(r.Context(), validWorkspaceId, user.ID)
+
+	if (member.ID == uuid.Nil){
+		respondWithError(w, http.StatusUnauthorized, "You are not a member of this workspace.")
+
+		app.logger.Printf("Create Task Error: You are not a member of this workspace.")
+        
+        return
+	}
+
+	due_date, dateErr := parseDueDate(params.DueDate)
+
+	if(dateErr != nil){
+		respondWithError(w, http.StatusBadRequest, "Invalid due date.")
+
+		app.logger.Printf("Invalid due date: %v", dateErr)
+        
+        return
+	}
+
+	// Check if project ID is valid
+	existingProj, projErr := app.storage.DB.CheckProjectExists(r.Context(),database.CheckProjectExistsParams{
+		ID: validProjectId,
+		WorkspaceID: member.WorkspaceID,
+	})
+
+	if (projErr != nil){
+		respondWithError(w, http.StatusNotFound, "Project not found! Invalid Project Id.")
+
+		app.logger.Printf("Project not found! Invalid Project Id: %v", projErr)
+        
+        return
+	}
+
+	// Check if task for a stutus is less than 30
+	tasksCount, tasksCountErr := app.storage.DB.GetNumberOfTasks(r.Context(), database.GetNumberOfTasksParams{
+		Status: sql.NullString{String: params.Status, Valid: params.Status != ""},
+		ProjectID: existingProj.ID,
+		WorkspaceID: member.WorkspaceID,
+	})
+
+	if tasksCountErr == nil && tasksCount == 30 {
+		respondWithError(w, http.StatusNotAcceptable, "Max tasks created")
+
+		app.logger.Printf("Max tasks created!")
+        
+        return
+	}
+
+	// check if current task project is the same. 
+	// if same keep position or change position to new project highest position.
+	var position int
+
+	if(task.ProjectID == existingProj.ID){
+		position = int(task.Position)
+	} else {
+		highestPosition, _ := app.storage.DB.GetTaskWithHighestPosition(r.Context(), database.GetTaskWithHighestPositionParams{
+			WorkspaceID: member.WorkspaceID,
+			ProjectID: existingProj.ID,
+	    })
+
+		if (highestPosition > 0){
+			position = int(highestPosition) + 1
+		} else {
+			position = 0
+		}
+	}
+
+    // Update task
+	dbErr := app.storage.DB.UpdateTask(r.Context(), database.UpdateTaskParams{
+		ID: task.ID,
+		WorkspaceID: member.WorkspaceID,
+		ProjectID: existingProj.ID,
+		AssigneeID: uuid.NullUUID{UUID: validAssigneeId, Valid: validAssigneeId != uuid.UUID{}},
+		Name: params.Name,
+		Description: sql.NullString{String: params.Description, Valid: params.Description != ""},
+		Status: sql.NullString{String: params.Status, Valid: params.Status != ""},
+		DueDate: sql.NullTime{Time: due_date, Valid: due_date != time.Time{}},
+		Position: int32(position),
+	})
+
+	if dbErr != nil {
+		app.logger.Printf("Couldn't update task: %v", dbErr)
+
+		respondWithError(w, http.StatusInternalServerError, "Couldn't update task")
+
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, "Task updated")
+}
+
+func (app *application) updateKanbanTasks(w http.ResponseWriter, r *http.Request, user database.User) {
+	// Get the workspace and project ID from the URL params
+    workspaceId := chi.URLParam(r, "workspaceId")
+
+	projectId := chi.URLParam(r, "projectId")
+
+    if workspaceId == "" || projectId == "" {
+		respondWithError(w, http.StatusBadRequest, "Workspace and project ID is required")
+        
+        return
+    }
+
+	validWorkspaceId, invalidIdErr := uuid.Parse(workspaceId)
+
+	if invalidIdErr != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid Workspace ID format")
+        
+        return
+	}
+
+	validProjectId, invalidProjIdErr := uuid.Parse(projectId)
+
+	if invalidProjIdErr != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid Project ID format")
+        
+        return
+	}
+
+	type Task struct {
+		Id        string   `json:"id"`
+		Status    string   `json:"status"`
+		Position  int32    `json:"position"`
+	}
+	
+	type parameters struct {
+		Tasks []Task  `json:"tasks"`
+	}
+
+	// Validating body
+	decoder := json.NewDecoder(r.Body)
+
+	params := parameters{}
+
+	err := decoder.Decode(&params)
+
+	if err != nil {
+		app.logger.Printf("Error parsing JSON: %v", err)
+		
+		respondWithError(w, http.StatusBadRequest, "Error parsing JSON")
+
+		return
+	}
+
+	// Check if current user is a member and an admin
+	member := app.getMemberHandler(r.Context(), validWorkspaceId, user.ID)
+
+	if (member.ID == uuid.Nil){
+		respondWithError(w, http.StatusUnauthorized, "You are not a member of this workspace.")
+
+		app.logger.Printf("Create Task Error: You are not a member of this workspace.")
+        
+        return
+	}
+
+	// Execute transaction to update tasks
+	tsxErr := app.WithTx(r.Context(), func(q *database.Queries) error {
+		for _, task := range(params.Tasks){
+			taskId, err := uuid.Parse(task.Id)
+			
+            if err != nil {
+                return fmt.Errorf("invalid task ID: %v", err)
+            }
+
+			// Check if task for a stutus is less than 30
+			tasksCount, tasksCountErr := app.storage.DB.GetNumberOfTasks(r.Context(), database.GetNumberOfTasksParams{
+				Status: sql.NullString{String: task.Status, Valid: task.Status != ""},
+				ProjectID: validProjectId,
+				WorkspaceID: member.WorkspaceID,
+			})
+
+			if tasksCountErr == nil && tasksCount == 30 {
+				respondWithError(w, http.StatusNotAcceptable, "Max tasks created")
+
+				app.logger.Printf("Max tasks created!")
+				
+				return tasksCountErr
+			}
+
+			// Get current task
+			taskExists, taskErr := app.storage.DB.CheckForProjectChange(r.Context(), database.CheckForProjectChangeParams{
+				ID: taskId,
+				WorkspaceID: member.WorkspaceID,
+			})
+
+			if taskErr != nil {
+				app.logger.Printf("Task not found: %v", taskErr)
+				
+				respondWithError(w, http.StatusNotFound, "Task not found")
+
+				return taskErr
+			}
+
+			// Update task
+			dbErr := app.storage.DB.UpdateTaskStatusAndPosition(r.Context(), database.UpdateTaskStatusAndPositionParams{
+				ID: taskExists.ID,
+				WorkspaceID: member.WorkspaceID,
+				Status: sql.NullString{String: task.Status, Valid: task.Status != ""},
+				Position: int32(task.Position),
+			})
+
+			if dbErr != nil {
+				app.logger.Printf("Couldn't update task: %v", dbErr)
+
+				respondWithError(w, http.StatusInternalServerError, "Couldn't update task")
+
+				return dbErr
+			}
+		}
+
+		return nil
+	})
+
+	if tsxErr != nil {
+		app.logger.Printf("Error updating tasks: %v", err)
+
+        respondWithError(w, http.StatusInternalServerError, "Failed to update tasks")
+
+        return
+	}
+
+	respondWithJSON(w, http.StatusOK, "Tasks updated")
+	
+}
+

@@ -79,3 +79,9 @@ export type OptionsProps = {
     };
   }[];
 };
+
+export type TasksPayload = {
+  id: string;
+  status: TaskStatus;
+  position: number;
+}[];

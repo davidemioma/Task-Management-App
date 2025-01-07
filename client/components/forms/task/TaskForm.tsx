@@ -3,16 +3,16 @@
 import React from "react";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
-import { useParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { getWorkspaceTasksId } from "@/lib/utils";
-import { createTask } from "@/lib/actions/tasks";
 import { getTaskOptions } from "@/lib/data/tasks";
 import { Textarea } from "@/components/ui/textarea";
 import DatePicker from "@/components/ui/date-picker";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { OptionsProps, WorkspaceTaskProps } from "@/types";
+import { createTask, updateTask } from "@/lib/actions/tasks";
+import { useParams, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { TaskSchema, TaskStatus, TaskValidator } from "@/lib/validators/task";
@@ -35,10 +35,13 @@ import {
 type Props = {
   onClose?: () => void;
   initialData?: WorkspaceTaskProps;
+  task?: TaskStatus;
 };
 
-const TaskForm = ({ initialData, onClose }: Props) => {
+const TaskForm = ({ initialData, task, onClose }: Props) => {
   const params = useParams();
+
+  const searchParams = useSearchParams();
 
   const queryClient = useQueryClient();
 
@@ -46,12 +49,18 @@ const TaskForm = ({ initialData, onClose }: Props) => {
 
   const workspaceId = params.workspaceId;
 
+  const status = searchParams.get("status");
+
+  const assigneeId = searchParams.get("assigneeId");
+
+  const dueDate = searchParams.get("dueDate");
+
   const form = useForm<TaskValidator>({
     resolver: zodResolver(TaskSchema),
     defaultValues: {
       name: initialData?.name || "",
       description: initialData?.description || "",
-      status: initialData?.status || TaskStatus.BACKLOG,
+      status: initialData?.status || task || TaskStatus.BACKLOG,
       dueDate: initialData?.dueDate || undefined,
       projectId: initialData?.projectId || (projectId as string) || "",
       assigneeId: initialData?.assigneeId || "",
@@ -89,7 +98,52 @@ const TaskForm = ({ initialData, onClose }: Props) => {
       toast.success("New task created");
 
       queryClient.invalidateQueries({
-        queryKey: [getWorkspaceTasksId, workspaceId, projectId],
+        queryKey: [
+          getWorkspaceTasksId,
+          workspaceId,
+          projectId,
+          assigneeId,
+          dueDate,
+          status,
+        ],
+      });
+
+      form.reset();
+
+      onClose?.();
+    },
+    onError: (err) => {
+      toast.error("Something went wrong! " + err.message);
+    },
+  });
+
+  const { mutate: updateTaskHandler, isPending: isUpdating } = useMutation({
+    mutationKey: ["update-task", workspaceId, initialData?.id],
+    mutationFn: async (values: TaskValidator) => {
+      const result = await updateTask({
+        workspaceId: workspaceId as string,
+        taskId: initialData?.id as string,
+        values,
+      });
+
+      return result;
+    },
+    onSuccess: (res) => {
+      if (res.status !== 200) {
+        toast.error("Something went wrong! could not update task.");
+      }
+
+      toast.success("Task updated");
+
+      queryClient.invalidateQueries({
+        queryKey: [
+          getWorkspaceTasksId,
+          workspaceId,
+          projectId,
+          assigneeId,
+          dueDate,
+          status,
+        ],
       });
 
       form.reset();
@@ -103,7 +157,7 @@ const TaskForm = ({ initialData, onClose }: Props) => {
 
   const onSubmit = (values: TaskValidator) => {
     if (initialData) {
-      return;
+      updateTaskHandler(values);
     } else {
       createTaskHandler(values);
     }
@@ -124,7 +178,13 @@ const TaskForm = ({ initialData, onClose }: Props) => {
                   <Input
                     placeholder="Name..."
                     {...field}
-                    disabled={isPending || isLoading || isError || !options}
+                    disabled={
+                      isPending ||
+                      isLoading ||
+                      isError ||
+                      !options ||
+                      isUpdating
+                    }
                   />
                 </FormControl>
 
@@ -145,7 +205,13 @@ const TaskForm = ({ initialData, onClose }: Props) => {
                     placeholder="Write something..."
                     {...field}
                     rows={5}
-                    disabled={isPending || isLoading || isError || !options}
+                    disabled={
+                      isPending ||
+                      isLoading ||
+                      isError ||
+                      !options ||
+                      isUpdating
+                    }
                   />
                 </FormControl>
 
@@ -164,7 +230,13 @@ const TaskForm = ({ initialData, onClose }: Props) => {
                 <FormControl>
                   <DatePicker
                     {...field}
-                    isPending={isPending || isLoading || isError || !options}
+                    isPending={
+                      isPending ||
+                      isLoading ||
+                      isError ||
+                      !options ||
+                      isUpdating
+                    }
                   />
                 </FormControl>
 
@@ -187,7 +259,13 @@ const TaskForm = ({ initialData, onClose }: Props) => {
                   >
                     <FormControl>
                       <SelectTrigger
-                        disabled={isPending || isLoading || isError || !options}
+                        disabled={
+                          isPending ||
+                          isLoading ||
+                          isError ||
+                          !options ||
+                          isUpdating
+                        }
                       >
                         <SelectValue
                           placeholder={
@@ -244,7 +322,13 @@ const TaskForm = ({ initialData, onClose }: Props) => {
                 >
                   <FormControl>
                     <SelectTrigger
-                      disabled={isPending || isLoading || isError || !options}
+                      disabled={
+                        isPending ||
+                        isLoading ||
+                        isError ||
+                        !options ||
+                        isUpdating
+                      }
                     >
                       <SelectValue
                         placeholder={
@@ -300,7 +384,13 @@ const TaskForm = ({ initialData, onClose }: Props) => {
                 >
                   <FormControl>
                     <SelectTrigger
-                      disabled={isPending || isLoading || isError || !options}
+                      disabled={
+                        isPending ||
+                        isLoading ||
+                        isError ||
+                        !options ||
+                        isUpdating
+                      }
                     >
                       <SelectValue placeholder="Select Status" />
                     </SelectTrigger>
@@ -331,7 +421,7 @@ const TaskForm = ({ initialData, onClose }: Props) => {
 
         <Button
           type="submit"
-          disabled={isPending || isLoading || isError || !options}
+          disabled={isPending || isLoading || isError || !options || isUpdating}
         >
           {initialData ? "Save" : "Create"}
         </Button>

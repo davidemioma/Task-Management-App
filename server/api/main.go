@@ -53,7 +53,9 @@ func main() {
 	// Create a logger
 	logger := log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
 
-	cfg := config{}
+	cfg := config{
+		db: db,
+	}
 
 	storage := storage{
 		DB: database.New(db),

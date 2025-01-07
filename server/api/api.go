@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 	"server/internal/database"
@@ -11,7 +12,9 @@ import (
 	"github.com/go-chi/cors"
 )
 
-type config struct {}
+type config struct {
+	db *sql.DB
+}
 
 type storage struct {
 	DB *database.Queries
@@ -102,7 +105,11 @@ func (app *application) mount() http.Handler {
 
 		r.Post("/workspaces/{workspaceId}/tasks", app.middlewareAuth(app.createTaskHandler))
 
+		r.Patch("/workspaces/{workspaceId}/tasks/{taskId}", app.middlewareAuth(app.updateTaskHandler))
+
 		r.Get("/workspaces/{workspaceId}/projects/{projectId}/tasks", app.middlewareAuth(app.getTasksHandler))
+
+		r.Patch("/workspaces/{workspaceId}/projects/{projectId}/tasks", app.middlewareAuth(app.updateKanbanTasks))
 
 		r.Delete("/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}", app.middlewareAuth(app.deleteTasksHandler))
 	})

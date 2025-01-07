@@ -1,6 +1,9 @@
 package main
 
 import (
+	"context"
+	"fmt"
+	"server/internal/database"
 	"strings"
 	"time"
 )
@@ -61,4 +64,27 @@ func parseDueDate(dueDateStr string) (time.Time, error) {
 	}
 
 	return parsedTime, nil
+}
+
+func (app *application) WithTx(ctx context.Context, fn func(*database.Queries) error) error {
+	tx, err := app.config.db.BeginTx(ctx, nil)
+
+    if err != nil {
+        return err
+    }
+
+	// Initialize sqlc transaction handler
+	qtx := database.New(tx)
+
+	err = fn(qtx)
+
+	if err != nil {
+        if rbErr := tx.Rollback(); rbErr != nil {
+            return fmt.Errorf("tx err: %v, rb err: %v", err, rbErr)
+        }
+
+        return err
+    }
+
+	return tx.Commit()
 }

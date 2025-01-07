@@ -5,26 +5,36 @@ import Wrapper from "../Wrapper";
 import { cn } from "@/lib/utils";
 import TaskForm from "./TaskForm";
 import { PlusIcon } from "lucide-react";
+import { TaskStatus } from "@/lib/validators/task";
 import { buttonVariants } from "@/components/ui/button";
 
-const CreateTaskModal = () => {
+type Props = {
+  task?: TaskStatus;
+  children?: React.ReactNode;
+};
+
+const CreateTaskModal = ({ children, task }: Props) => {
   const [open, setOpen] = useState(false);
 
   return (
     <Wrapper
       className="h-[80vh] overflow-y-scroll flex flex-col"
       trigger={
-        <div
-          className={cn(
-            buttonVariants({
-              size: "sm",
-            }),
-            "w-full lg:w-auto"
-          )}
-        >
-          <PlusIcon className="size-4" />
-          New Task
-        </div>
+        children ? (
+          children
+        ) : (
+          <div
+            className={cn(
+              buttonVariants({
+                size: "sm",
+              }),
+              "w-full lg:w-auto"
+            )}
+          >
+            <PlusIcon className="size-4" />
+            New Task
+          </div>
+        )
       }
       title="Create Task"
       open={open}
@@ -32,7 +42,7 @@ const CreateTaskModal = () => {
         setOpen((prev) => !prev);
       }}
     >
-      <TaskForm onClose={() => setOpen(false)} />
+      <TaskForm task={task} onClose={() => setOpen(false)} />
     </Wrapper>
   );
 };
