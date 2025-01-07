@@ -250,7 +250,7 @@ func (app *application) getTasksHandler(w http.ResponseWriter, r *http.Request, 
 
 		tasks = dbFilteredTasks
 	} else {
-		dbTasks, dbErr := app.storage.DB.GetAllTasks(r.Context(), database.GetAllTasksParams{
+		dbTasks, dbErr := app.storage.DB.GetAllTasksByProjId(r.Context(), database.GetAllTasksByProjIdParams{
 			WorkspaceID: member.WorkspaceID,
 			ProjectID: validProjectId,
 		})
@@ -765,3 +765,208 @@ func (app *application) updateKanbanTasks(w http.ResponseWriter, r *http.Request
 	
 }
 
+func (app *application) getMyTasksHandler(w http.ResponseWriter, r *http.Request, user database.User) {
+	// Get the workspace ID from the URL params
+    workspaceId := chi.URLParam(r, "workspaceId")
+
+    if workspaceId == "" {
+		respondWithError(w, http.StatusBadRequest, "Workspace ID is required")
+        
+        return
+    }
+
+	validWorkspaceId, invalidIdErr := uuid.Parse(workspaceId)
+
+	if invalidIdErr != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid Workspace ID format")
+        
+        return
+	}
+
+	// Check if current user is a member and an admin
+	member := app.getMemberHandler(r.Context(), validWorkspaceId, user.ID)
+
+	if (member.ID == uuid.Nil){
+		respondWithError(w, http.StatusUnauthorized, "You are not a member of this workspace.")
+
+		app.logger.Printf("Create Task Error: You are not a member of this workspace.")
+        
+        return
+	}
+
+	// Get Tasks
+	tasks, tasksErr := app.storage.DB.GetMyTasks(r.Context(), database.GetMyTasksParams{
+		WorkspaceID: member.WorkspaceID,
+		AssigneeID: uuid.NullUUID{UUID: user.ID, Valid: user.ID != uuid.Nil},
+	})
+
+	if tasksErr != nil {
+		app.logger.Printf("Error getting tasks: %v", tasksErr)
+
+        respondWithError(w, http.StatusInternalServerError, "Failed to get tasks")
+
+        return
+	}
+
+
+	if (len(tasks) == 0){
+		app.logger.Printf("No tasks available")
+
+		respondWithJSON(w, http.StatusOK, nil)
+	}
+
+	var allTasks []JsonTask
+
+	for _, task := range tasks{
+		assignee, usrErr := app.storage.DB.GetUserById(r.Context(), task.AssigneeID.UUID)
+
+		if usrErr != nil {
+			respondWithError(w, http.StatusNotFound, "Unable to get user.")
+
+			app.logger.Printf("Unable to get user: %v", usrErr)
+
+			return
+		}
+
+		project, projErr := app.storage.DB.GetTaskProject(r.Context(), database.GetTaskProjectParams{
+			ID: task.ProjectID,
+			WorkspaceID: task.WorkspaceID,
+		})
+
+		if projErr != nil {
+			respondWithError(w, http.StatusNotFound, "Unable to get project.")
+
+			app.logger.Printf("Unable to get project: %v", projErr)
+
+			return
+		}
+
+		allTasks = append(allTasks, JsonTask{
+			ID: task.ID,
+			WorkspaceID: task.WorkspaceID,
+			ProjectID: task.ProjectID,
+			AssigneeID: task.AssigneeID.UUID,
+			Name: task.Name,
+			Description: task.Description.String,
+			Position: task.Position,
+			DueDate: task.DueDate.Time,
+			Status: task.Status.String,
+			CreatedAt: task.CreatedAt,
+			UpdatedAt: task.UpdatedAt,
+			User: TaskUser{
+				Username: assignee.Username,
+				Image: assignee.Image.String,
+			},
+			Project: TaskProject{
+				Name: project.Name,
+				ImageUrl: project.ImageUrl.String,
+			},
+		})
+	}
+
+	respondWithJSON(w, http.StatusOK, allTasks)
+	
+}
+
+func (app *application) getTaskByIdHandler(w http.ResponseWriter, r *http.Request, user database.User) {
+	// Get the task and workspace ID from the URL params
+	taskId := chi.URLParam(r, "taskId")
+
+    workspaceId := chi.URLParam(r, "workspaceId")
+
+    if taskId == "" || workspaceId == "" {
+		respondWithError(w, http.StatusBadRequest, "Task and workspace ID is required")
+        
+        return
+    }
+
+	validTaskId, invalidTaskIdErr := uuid.Parse(taskId)
+
+	if invalidTaskIdErr != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid task ID format")
+        
+        return
+	}
+
+	validWorkspaceId, invalidIdErr := uuid.Parse(workspaceId)
+
+	if invalidIdErr != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid Workspace ID format")
+        
+        return
+	}
+
+	// Check if current user is a member and an admin
+	member := app.getMemberHandler(r.Context(), validWorkspaceId, user.ID)
+
+	if (member.ID == uuid.Nil){
+		respondWithError(w, http.StatusUnauthorized, "You are not a member of this workspace.")
+
+		app.logger.Printf("Create Task Error: You are not a member of this workspace.")
+        
+        return
+	}
+
+	// Get Task
+	task, taskErr := app.storage.DB.GetTaskById(r.Context(), database.GetTaskByIdParams{
+		ID: validTaskId,
+		WorkspaceID: member.WorkspaceID,
+	})
+
+	if taskErr != nil {
+		app.logger.Printf("Error getting task: %v", taskErr)
+
+        respondWithError(w, http.StatusNotFound, "Failed to get task")
+
+        return
+	}
+
+	// Get other task details
+	assignee, usrErr := app.storage.DB.GetUserById(r.Context(), task.AssigneeID.UUID)
+
+	if usrErr != nil {
+		respondWithError(w, http.StatusNotFound, "Unable to get user.")
+
+		app.logger.Printf("Unable to get user: %v", usrErr)
+
+		return
+	}
+
+	project, projErr := app.storage.DB.GetTaskProject(r.Context(), database.GetTaskProjectParams{
+		ID: task.ProjectID,
+		WorkspaceID: task.WorkspaceID,
+	})
+
+	if projErr != nil {
+		respondWithError(w, http.StatusNotFound, "Unable to get project.")
+
+		app.logger.Printf("Unable to get project: %v", projErr)
+
+		return
+	}
+
+	taskDetails := JsonTask{
+		ID: task.ID,
+		WorkspaceID: task.WorkspaceID,
+		ProjectID: task.ProjectID,
+		AssigneeID: task.AssigneeID.UUID,
+		Name: task.Name,
+		Description: task.Description.String,
+		Position: task.Position,
+		DueDate: task.DueDate.Time,
+		Status: task.Status.String,
+		CreatedAt: task.CreatedAt,
+		UpdatedAt: task.UpdatedAt,
+		User: TaskUser{
+			Username: assignee.Username,
+			Image: assignee.Image.String,
+		},
+		Project: TaskProject{
+			Name: project.Name,
+			ImageUrl: project.ImageUrl.String,
+		},
+	}
+
+	respondWithJSON(w, http.StatusOK, taskDetails)
+	
+}

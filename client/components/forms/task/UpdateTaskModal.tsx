@@ -17,7 +17,7 @@ const UpdateTaskModal = ({ open, setOpen, onClose, task }: Props) => {
     <Wrapper
       className="h-[80vh] overflow-y-scroll flex flex-col"
       trigger={<></>}
-      title="Create Task"
+      title="Update Task"
       open={open}
       onOpenChange={setOpen}
     >

@@ -86,7 +86,7 @@ func (q *Queries) DeleteTask(ctx context.Context, arg DeleteTaskParams) error {
 	return err
 }
 
-const getAllTasks = `-- name: GetAllTasks :many
+const getAllTasksByProjId = `-- name: GetAllTasksByProjId :many
 SELECT id, workspace_id, project_id, assignee_id, name, description, position, due_date, status, created_at, updated_at FROM tasks
 WHERE 
     workspace_id = $1
@@ -94,13 +94,13 @@ WHERE
 ORDER BY created_at DESC
 `
 
-type GetAllTasksParams struct {
+type GetAllTasksByProjIdParams struct {
 	WorkspaceID uuid.UUID
 	ProjectID   uuid.UUID
 }
 
-func (q *Queries) GetAllTasks(ctx context.Context, arg GetAllTasksParams) ([]Task, error) {
-	rows, err := q.db.QueryContext(ctx, getAllTasks, arg.WorkspaceID, arg.ProjectID)
+func (q *Queries) GetAllTasksByProjId(ctx context.Context, arg GetAllTasksByProjIdParams) ([]Task, error) {
+	rows, err := q.db.QueryContext(ctx, getAllTasksByProjId, arg.WorkspaceID, arg.ProjectID)
 	if err != nil {
 		return nil, err
 	}
@@ -194,6 +194,54 @@ func (q *Queries) GetFilteredTasks(ctx context.Context, arg GetFilteredTasksPara
 	return items, nil
 }
 
+const getMyTasks = `-- name: GetMyTasks :many
+SELECT id, workspace_id, project_id, assignee_id, name, description, position, due_date, status, created_at, updated_at FROM tasks
+WHERE 
+    workspace_id = $1
+    AND assignee_id = $2
+ORDER BY created_at DESC
+`
+
+type GetMyTasksParams struct {
+	WorkspaceID uuid.UUID
+	AssigneeID  uuid.NullUUID
+}
+
+func (q *Queries) GetMyTasks(ctx context.Context, arg GetMyTasksParams) ([]Task, error) {
+	rows, err := q.db.QueryContext(ctx, getMyTasks, arg.WorkspaceID, arg.AssigneeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Task
+	for rows.Next() {
+		var i Task
+		if err := rows.Scan(
+			&i.ID,
+			&i.WorkspaceID,
+			&i.ProjectID,
+			&i.AssigneeID,
+			&i.Name,
+			&i.Description,
+			&i.Position,
+			&i.DueDate,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getNumberOfTasks = `-- name: GetNumberOfTasks :one
 SELECT COUNT(*) as total_tasks 
 FROM tasks 
@@ -211,6 +259,35 @@ func (q *Queries) GetNumberOfTasks(ctx context.Context, arg GetNumberOfTasksPara
 	var total_tasks int64
 	err := row.Scan(&total_tasks)
 	return total_tasks, err
+}
+
+const getTaskById = `-- name: GetTaskById :one
+SELECT id, workspace_id, project_id, assignee_id, name, description, position, due_date, status, created_at, updated_at FROM tasks
+WHERE id = $1 AND workspace_id = $2
+`
+
+type GetTaskByIdParams struct {
+	ID          uuid.UUID
+	WorkspaceID uuid.UUID
+}
+
+func (q *Queries) GetTaskById(ctx context.Context, arg GetTaskByIdParams) (Task, error) {
+	row := q.db.QueryRowContext(ctx, getTaskById, arg.ID, arg.WorkspaceID)
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.ProjectID,
+		&i.AssigneeID,
+		&i.Name,
+		&i.Description,
+		&i.Position,
+		&i.DueDate,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getTaskMembers = `-- name: GetTaskMembers :many

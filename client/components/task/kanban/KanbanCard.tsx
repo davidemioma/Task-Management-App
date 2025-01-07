@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import TaskActions from "../TaskActions";
 import { WorkspaceTaskProps } from "@/types";
+import TaskActions from "../table/TaskActions";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import TaskDate from "../TaskDate";
+import TaskDate from "../table/TaskDate";
 
 type Props = {
   task: WorkspaceTaskProps;

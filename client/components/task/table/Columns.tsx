@@ -1,8 +1,8 @@
 "use client";
 
 import TaskDate from "./TaskDate";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
+import { Badge } from "../../ui/badge";
+import { Button } from "../../ui/button";
 import TaskActions from "./TaskActions";
 import { ArrowUpDown } from "lucide-react";
 import { WorkspaceTaskProps } from "@/types";

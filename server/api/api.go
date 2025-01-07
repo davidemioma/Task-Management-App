@@ -105,6 +105,10 @@ func (app *application) mount() http.Handler {
 
 		r.Post("/workspaces/{workspaceId}/tasks", app.middlewareAuth(app.createTaskHandler))
 
+		r.Get("/workspaces/{workspaceId}/tasks", app.middlewareAuth(app.getMyTasksHandler))
+
+		r.Get("/workspaces/{workspaceId}/tasks/{taskId}", app.middlewareAuth(app.getTaskByIdHandler))
+
 		r.Patch("/workspaces/{workspaceId}/tasks/{taskId}", app.middlewareAuth(app.updateTaskHandler))
 
 		r.Get("/workspaces/{workspaceId}/projects/{projectId}/tasks", app.middlewareAuth(app.getTasksHandler))

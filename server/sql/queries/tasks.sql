@@ -5,7 +5,7 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);
 -- name: GetTaskWithHighestPosition :one
 SELECT position FROM tasks WHERE workspace_id = $1 AND project_id = $2 ORDER BY position DESC LIMIT 1;
 
--- name: GetAllTasks :many
+-- name: GetAllTasksByProjId :many
 SELECT * FROM tasks
 WHERE 
     workspace_id = $1
@@ -68,4 +68,15 @@ SET
    status = $1,
    position = $2,
    updated_at = NOW()
-WHERE id = $3 AND workspace_id = $4;   
+WHERE id = $3 AND workspace_id = $4; 
+
+-- name: GetMyTasks :many
+SELECT * FROM tasks
+WHERE 
+    workspace_id = $1
+    AND assignee_id = $2
+ORDER BY created_at DESC;
+
+-- name: GetTaskById :one
+SELECT * FROM tasks
+WHERE id = $1 AND workspace_id = $2;

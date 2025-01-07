@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 import { useRouter } from "next/navigation";
 import { WorkspaceTaskProps } from "@/types";
-import DeleteTask from "../forms/task/DeleteTask";
+import DeleteTask from "../../forms/task/DeleteTask";
+import UpdateTaskModal from "../../forms/task/UpdateTaskModal";
 import {
   ExternalLink,
   MoreVertical,
@@ -17,7 +18,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import UpdateTaskModal from "../forms/task/UpdateTaskModal";
 
 type Props = {
   data: WorkspaceTaskProps;
@@ -63,9 +63,7 @@ const TaskActions = ({ data }: Props) => {
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuItem
             onClick={() =>
-              router.push(
-                `/workspaces/${data.workspaceId}/projects/${data.projectId}/tasks/${data.id}`
-              )
+              router.push(`/workspaces/${data.workspaceId}/tasks/${data.id}`)
             }
           >
             <ExternalLink className="size-4 stroke-2" />
@@ -75,17 +73,6 @@ const TaskActions = ({ data }: Props) => {
           <DropdownMenuItem onClick={() => setOpenUpdate(true)}>
             <PencilIcon className="size-4 stroke-2" />
             Edit Task
-          </DropdownMenuItem>
-
-          <DropdownMenuItem
-            onClick={() =>
-              router.push(
-                `/workspaces/${data.workspaceId}/projects/${data.projectId}`
-              )
-            }
-          >
-            <ExternalLink className="size-4 stroke-2" />
-            Open Project
           </DropdownMenuItem>
 
           <DropdownMenuItem

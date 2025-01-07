@@ -40,6 +40,8 @@ export const createTask = async ({
 
     revalidatePath(`/workspaces/${workspaceId}/projects/${values.projectId}`);
 
+    revalidatePath(`/workspaces/${workspaceId}/tasks`);
+
     return { status: res.status, data: result };
   } catch (err) {
     console.error("Create Task", err);
@@ -90,6 +92,8 @@ export const deleteTask = async ({
     const result = await res.data;
 
     revalidatePath(`/workspaces/${workspaceId}/projects/${projectId}`);
+
+    revalidatePath(`/workspaces/${workspaceId}/tasks`);
 
     return { status: res.status, data: result };
   } catch (err) {
@@ -145,9 +149,9 @@ export const updateTask = async ({
 
     revalidatePath(`/workspaces/${workspaceId}/projects/${values.projectId}`);
 
-    revalidatePath(
-      `/workspaces/${workspaceId}/projects/${values.projectId}/task/${taskId}`
-    );
+    revalidatePath(`/workspaces/${workspaceId}/tasks`);
+
+    revalidatePath(`/workspaces/${workspaceId}/tasks/${taskId}`);
 
     return { status: res.status, data: result };
   } catch (err) {
@@ -204,6 +208,8 @@ export const updateKanbanTasks = async ({
     const result = await res.data;
 
     revalidatePath(`/workspaces/${workspaceId}/projects/${projectId}`);
+
+    revalidatePath(`/workspaces/${workspaceId}/tasks`);
 
     return { status: res.status, data: result };
   } catch (err) {

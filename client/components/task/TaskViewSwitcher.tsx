@@ -1,14 +1,15 @@
 "use client";
 
 import React from "react";
-import { columns } from "./Columns";
 import { Loader2 } from "lucide-react";
 import TaskFilters from "./TaskFilters";
-import TasksKanban from "./kanban/TasksKaban";
+import { columns } from "./table/Columns";
 import { Separator } from "../ui/separator";
 import { DataTable } from "../ui/data-table";
+import TasksKanban from "./kanban/TasksKaban";
 import { useQuery } from "@tanstack/react-query";
 import { getWorkspaceTasksId } from "@/lib/utils";
+import TaskCalendar from "./calendar/TaskCalendar";
 import { getFilteredTasks } from "@/lib/data/tasks";
 import CreateTaskModal from "../forms/task/CreateTaskModal";
 import { useParams, useSearchParams } from "next/navigation";
@@ -104,8 +105,8 @@ const TaskViewSwitcher = () => {
               <TasksKanban data={tasks || []} />
             </TabsContent>
 
-            <TabsContent className="mt-0" value="calendar">
-              <div>Todo</div>
+            <TabsContent className="mt-0 h-full pb-5" value="calendar">
+              <TaskCalendar data={tasks || []} />
             </TabsContent>
           </>
         )}

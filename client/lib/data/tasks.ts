@@ -57,3 +57,51 @@ export const getFilteredTasks = async ({
 
   return result;
 };
+
+export const getTaskById = async ({
+  taskId,
+  workspaceId,
+}: {
+  taskId: string;
+  workspaceId: string;
+}) => {
+  const user = await currentUser();
+
+  if (!user) {
+    return null;
+  }
+
+  const res = await axios.get(
+    `${process.env.NEXT_PUBLIC_BASE_API_URL}/workspaces/${workspaceId}/tasks/${taskId}`,
+    {
+      headers: {
+        Authorization: `clerkId ${user.id}`,
+      },
+    }
+  );
+
+  const result = (await res.data) as WorkspaceTaskProps;
+
+  return result;
+};
+
+export const getMyTasks = async (workspaceId: string) => {
+  const user = await currentUser();
+
+  if (!user) {
+    return [];
+  }
+
+  const res = await axios.get(
+    `${process.env.NEXT_PUBLIC_BASE_API_URL}/workspaces/${workspaceId}/tasks`,
+    {
+      headers: {
+        Authorization: `clerkId ${user.id}`,
+      },
+    }
+  );
+
+  const result = (await res.data) as WorkspaceTaskProps[];
+
+  return result;
+};

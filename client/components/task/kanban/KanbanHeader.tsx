@@ -3,6 +3,8 @@
 import React from "react";
 import { TaskStatus } from "@/lib/validators/task";
 import { cn, snakeCaseToTitleCase } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import CreateTaskModal from "@/components/forms/task/CreateTaskModal";
 import {
   CircleCheckIcon,
   CircleDashedIcon,
@@ -11,8 +13,6 @@ import {
   CircleIcon,
   PlusIcon,
 } from "lucide-react";
-import CreateTaskModal from "@/components/forms/task/CreateTaskModal";
-import { buttonVariants } from "@/components/ui/button";
 
 type Props = {
   board: TaskStatus;

@@ -2,6 +2,7 @@
 
 import React, { Dispatch, SetStateAction } from "react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { deleteTask } from "@/lib/actions/tasks";
 import { getWorkspaceTasksId } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
@@ -14,6 +15,7 @@ type Props = {
   workspaceId: string;
   projectId: string;
   taskId: string;
+  isTaskPage?: boolean;
 };
 
 const DeleteTask = ({
@@ -22,7 +24,10 @@ const DeleteTask = ({
   workspaceId,
   projectId,
   taskId,
+  isTaskPage,
 }: Props) => {
+  const router = useRouter();
+
   const queryClient = useQueryClient();
 
   const searchParams = useSearchParams();
@@ -59,6 +64,10 @@ const DeleteTask = ({
       toast.success("Task deleted");
 
       setOpen(false);
+
+      if (isTaskPage) {
+        router.push(`/workspaces/${workspaceId}/tasks`);
+      }
     },
     onError: (err) => {
       toast.error("Something went wrong! " + err.message);
