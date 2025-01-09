@@ -73,6 +73,6 @@ func main() {
 
 	log.Printf("Server running on port %v", port)
 
-	log.Fatal(app.run(":" + port, r))
+	log.Fatal(app.run("0.0.0.0:" + port, r))
 }
 
