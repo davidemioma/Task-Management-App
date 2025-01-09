@@ -754,7 +754,7 @@ func (app *application) updateKanbanTasks(w http.ResponseWriter, r *http.Request
 	})
 
 	if tsxErr != nil {
-		app.logger.Printf("Error updating tasks: %v", err)
+		app.logger.Printf("Error updating tasks: %v", tsxErr)
 
         respondWithError(w, http.StatusInternalServerError, "Failed to update tasks")
 

@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { getWorkspaceTasksId } from "@/lib/utils";
 import { getTaskOptions } from "@/lib/data/tasks";
 import { Textarea } from "@/components/ui/textarea";
 import DatePicker from "@/components/ui/date-picker";
@@ -16,6 +15,11 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { TaskSchema, TaskStatus, TaskValidator } from "@/lib/validators/task";
+import {
+  getAnalyticsKey,
+  getWorkspaceAnalyticsKey,
+  getWorkspaceTasksId,
+} from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -106,6 +110,14 @@ const TaskForm = ({ initialData, task, onClose }: Props) => {
           dueDate,
           status,
         ],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: [getAnalyticsKey, workspaceId, projectId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: [getWorkspaceAnalyticsKey, workspaceId],
       });
 
       form.reset();

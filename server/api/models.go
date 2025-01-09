@@ -249,3 +249,46 @@ func membersToJsonMembers(members []database.GetTaskMembersRow) []OptionMember {
 
 	return newMembers
 }
+
+type Analytics struct {
+	TaskCount                int `json:"taskCount"`
+	TaskDifference           int `json:"taskDifference"`
+	AssignedTaskCount        int `json:"assignedTaskCount"`
+	AssignedTaskDifference   int `json:"assignedTaskDifference"`
+	CompletedTaskCount       int `json:"completedTaskCount"`
+	CompletedTaskDifference  int `json:"completedTaskDifference"`
+	IncompleteTaskCount      int `json:"incompleteTaskCount"`
+	IncompleteTaskDifference int `json:"incompleteTaskDifference"`
+	OverdueTaskCount         int `json:"overdueTaskCount"`
+	OverdueTaskDifference    int `json:"overdueTaskDifference"`
+}
+
+type HomeUser struct {
+	Email    string     `json:"email"`
+	Username string     `json:"username"`
+	Image    string     `json:"image"`
+}
+
+type HomeMember struct {
+	ID       uuid.UUID  `json:"id"`
+	Role     string     `json:"role"`
+	User     HomeUser   `json:"user"`
+}
+
+func getJsonMembers(members []database.GetSomeMembersRow) []HomeMember {
+	var newMembers [] HomeMember
+
+	for _, member := range members{
+		newMembers = append(newMembers, HomeMember{
+			ID: member.ID,
+			Role: member.Role,
+			User: HomeUser{
+				Email: member.Email,
+				Username: member.Username,
+				Image: member.Image.String,
+			},
+		})
+	}
+
+	return newMembers
+}

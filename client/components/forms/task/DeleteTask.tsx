@@ -4,10 +4,14 @@ import React, { Dispatch, SetStateAction } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { deleteTask } from "@/lib/actions/tasks";
-import { getWorkspaceTasksId } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 import DeleteModal from "@/components/modals/DeleteModal";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  getAnalyticsKey,
+  getWorkspaceTasksId,
+  getWorkspaceAnalyticsKey,
+} from "@/lib/utils";
 
 type Props = {
   open: boolean;
@@ -59,6 +63,14 @@ const DeleteTask = ({
           dueDate,
           status,
         ],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: [getAnalyticsKey, workspaceId, projectId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: [getWorkspaceAnalyticsKey, workspaceId],
       });
 
       toast.success("Task deleted");

@@ -116,6 +116,11 @@ func (app *application) mount() http.Handler {
 		r.Patch("/workspaces/{workspaceId}/projects/{projectId}/tasks", app.middlewareAuth(app.updateKanbanTasks))
 
 		r.Delete("/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}", app.middlewareAuth(app.deleteTasksHandler))
+
+		// Analytics
+		r.Get("/workspaces/{workspaceId}/analytics", app.middlewareAuth(app.getWorkspaceAnalytics))
+
+		r.Get("/workspaces/{workspaceId}/projects/{projectId}/analytics", app.middlewareAuth(app.getProjectAnalytics))
 	})
 
 	return r

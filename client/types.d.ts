@@ -85,3 +85,30 @@ export type TasksPayload = {
   status: TaskStatus;
   position: number;
 }[];
+
+export type AnalyticsType = {
+  taskCount: number;
+  taskDifference: number;
+  assignedTaskCount: number;
+  assignedTaskDifference: number;
+  completedTaskCount: number;
+  completedTaskDifference: number;
+  incompleteTaskCount: number;
+  incompleteTaskDifference: number;
+  overdueTaskCount: number;
+  overdueTaskDifference: number;
+};
+
+export type WorkspaceDataType = {
+  projects: WorkspaceProjectProps[];
+  members: {
+    id: string;
+    role: string;
+    user: {
+      email: string;
+      username: string;
+      image: string;
+    };
+  }[];
+  analytics: AnalyticsType;
+};

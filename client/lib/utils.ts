@@ -11,6 +11,10 @@ export const getWorkspaceProjectsQueryId = "get-workspace-projects";
 
 export const getWorkspaceTasksId = "get-workspace-tasks";
 
+export const getAnalyticsKey = "get-project-analytics";
+
+export const getWorkspaceAnalyticsKey = "get-workspace-analytics";
+
 export const snakeCaseToTitleCase = (str: string) => {
   return str
     .toLowerCase()

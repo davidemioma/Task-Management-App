@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import ErrorPage from "@/components/ErrorPage";
 import { getCurrentUser } from "@/lib/data/auth";
+import WorkspaceDetails from "./_components/WorkspaceDetails";
 
-export default async function Workspace() {
+export default async function WorkspacePage() {
   const currentUser = await getCurrentUser();
 
   if (!currentUser) {
@@ -21,5 +22,5 @@ export default async function Workspace() {
     );
   }
 
-  return <div>Workspace</div>;
+  return <WorkspaceDetails />;
 }

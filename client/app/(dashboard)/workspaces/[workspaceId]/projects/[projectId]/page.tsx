@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/data/auth";
 import { notFound, redirect } from "next/navigation";
 import ProjectAvatar from "@/components/ProjectAvatar";
 import LoadingScreen from "@/components/LoadingScreen";
+import ProjectAnalytics from "./_components/ProjectsAnalytics";
 import { getWorkspaceProjectById } from "@/lib/data/projects";
 import TaskViewSwitcher from "@/components/task/TaskViewSwitcher";
 import EditProjectModal from "@/components/forms/project/EditProjectModal";
@@ -73,6 +74,11 @@ export default async function ProjectPage({
             />
           </div>
         </div>
+
+        <ProjectAnalytics
+          workspaceId={project.workspaceId}
+          projectId={project.id}
+        />
 
         <TaskViewSwitcher />
       </div>
