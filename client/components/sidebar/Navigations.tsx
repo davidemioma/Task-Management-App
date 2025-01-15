@@ -12,37 +12,37 @@ import {
   GoHomeFill,
 } from "react-icons/go";
 
+const routes = [
+  {
+    label: "Home",
+    href: ``,
+    icon: GoHome,
+    activeIcon: GoHomeFill,
+  },
+  {
+    label: "My Tasks",
+    href: `/tasks`,
+    icon: GoCheckCircle,
+    activeIcon: GoCheckCircleFill,
+  },
+  {
+    label: "Settings",
+    href: `/settings`,
+    icon: SettingsIcon,
+    activeIcon: SettingsIcon,
+  },
+  {
+    label: "Members",
+    href: `/members`,
+    icon: UsersIcon,
+    activeIcon: UsersIcon,
+  },
+];
+
 const Navigations = () => {
   const params = useParams();
 
   const pathname = usePathname();
-
-  const routes = [
-    {
-      label: "Home",
-      href: `/workspaces/${params.workspaceId}`,
-      icon: GoHome,
-      activeIcon: GoHomeFill,
-    },
-    {
-      label: "My Tasks",
-      href: `/workspaces/${params.workspaceId}/tasks`,
-      icon: GoCheckCircle,
-      activeIcon: GoCheckCircleFill,
-    },
-    {
-      label: "Settings",
-      href: `/workspaces/${params.workspaceId}/settings`,
-      icon: SettingsIcon,
-      activeIcon: SettingsIcon,
-    },
-    {
-      label: "Members",
-      href: `/workspaces/${params.workspaceId}/members`,
-      icon: UsersIcon,
-      activeIcon: UsersIcon,
-    },
-  ];
 
   return (
     <ul className="flex flex-col">
@@ -51,9 +51,11 @@ const Navigations = () => {
 
         const Icon = isActive ? route.activeIcon : route.icon;
 
+        const href = `/workspaces/${params.workspaceId}` + route.href;
+
         return (
           <li key={route.href} className="cursor-pointer">
-            <Link href={route.href}>
+            <Link href={href}>
               <div
                 className={cn(
                   "flex items-center gap-2.5 p-2.5 rounded-md text-neutral-500 font-medium hover:text-primary transition",
